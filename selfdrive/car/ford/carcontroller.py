@@ -121,7 +121,7 @@ class CarController(CarControllerBase):
     self.path_angle_deque = deque(maxlen=self.path_angle_filter_samples) # deque to hold the samples
     self.path_angle_wheel_angle_conversion = 0.0017 # degrees to milliradians
     self.path_angle_speed_bp = [4.4, 40.23]  # what speeds to adjust path_angle_speed_factor over.
-    self.path_angle_low_speed_factor = 2.00 # path_angle_speed_factor at 4.45 m/s
+    self.path_angle_low_speed_factor = 1.85 # path_angle_speed_factor at 4.45 m/s
     self.path_angle_high_speed_factor = 1.0 # path_angle_speed_factor at 40.23 m/s
 
     # max absolute values for all four signals

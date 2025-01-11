@@ -125,7 +125,7 @@ class CarController(CarControllerBase):
     self.path_angle_high_speed_factor = 1.0 # path_angle_speed_factor at 40.23 m/s
 
     # max absolute values for all four signals
-    self.path_angle_max = 0.75  # too much path_angle can cause jerky steering
+    self.path_angle_max = 0.35  # too much path_angle can cause jerky steering
     self.path_offset_max = 1.50  # too much path_offset can cause jerky steering
     self.curvature_max = 0.015  # too much curvature can cause steering windup
     self.curvature_rate_max = 0.001023  # from dbc files

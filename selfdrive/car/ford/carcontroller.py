@@ -121,11 +121,11 @@ class CarController(CarControllerBase):
     self.path_angle_deque = deque(maxlen=self.path_angle_filter_samples) # deque to hold the samples
     self.path_angle_wheel_angle_conversion = 0.0017 # degrees to milliradians
     self.path_angle_speed_bp = [4.4, 40.23]  # what speeds to adjust path_angle_speed_factor over.
-    self.path_angle_low_speed_factor = 1.85 # path_angle_speed_factor at 4.45 m/s
+    self.path_angle_low_speed_factor = 1.75 # path_angle_speed_factor at 4.45 m/s
     self.path_angle_high_speed_factor = 1.0 # path_angle_speed_factor at 40.23 m/s
 
     # max absolute values for all four signals
-    self.path_angle_max = 0.45  # too much path_angle can cause jerky steering
+    self.path_angle_max = 0.55  # too much path_angle can cause jerky steering
     self.path_offset_max = 1.50  # too much path_offset can cause jerky steering
     self.curvature_max = 0.015  # too much curvature can cause steering windup
     self.curvature_rate_max = 0.001023  # from dbc files

@@ -102,7 +102,7 @@ class CarController(CarControllerBase):
     # Curvature variables
     self.lane_change_factor = 0.65  #how much of predicted curvature do we actually use if a lane chagne is active (because desired curvatureis too aggressive)
     self.requested_curvature_filtered = FirstOrderFilter(0.0, 0.3, 0.05)  # filter for apply_curvature
-    self.pc_blend_ratio = 0.75 # 6% Predicted Curvature and 40% Desired Curvature
+    self.pc_blend_ratio = 0.85 # 6% Predicted Curvature and 40% Desired Curvature
     self.curvature_lookup_time =  CP.steerActuatorDelay # how far into the future do we need to look for curvature signal
 
     # Curvature rate variables

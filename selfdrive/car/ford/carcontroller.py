@@ -102,7 +102,7 @@ class CarController(CarControllerBase):
     # Curvature variables
     self.lane_change_factor = 0.65  #how much of predicted curvature do we actually use if a lane chagne is active (because desired curvatureis too aggressive)
     self.requested_curvature_filtered = FirstOrderFilter(0.0, 0.3, 0.05)  # filter for apply_curvature
-    self.pc_blend_ratio = 0.45 # 6% Predicted Curvature and 40% Desired Curvature
+    self.pc_blend_ratio = 0.50 # 6% Predicted Curvature and 40% Desired Curvature
     self.curvature_lookup_time =  CP.steerActuatorDelay # how far into the future do we need to look for curvature signal
 
     # Curvature rate variables
@@ -121,11 +121,11 @@ class CarController(CarControllerBase):
     self.path_angle_deque = deque(maxlen=self.path_angle_filter_samples) # deque to hold the samples
     self.path_angle_wheel_angle_conversion = 0.0017 # degrees to milliradians
     self.path_angle_speed_bp = [4.4, 40.23]  # what speeds to adjust path_angle_speed_factor over.
-    self.path_angle_low_speed_factor = 5.0 # path_angle_speed_factor at 4.45 m/s
+    self.path_angle_low_speed_factor = 4.0 # path_angle_speed_factor at 4.45 m/s
     self.path_angle_high_speed_factor = 1.0 # path_angle_speed_factor at 40.23 m/s
 
     # max absolute values for all four signals
-    self.path_angle_max = 0.35  # too much path_angle can cause jerky steering
+    self.path_angle_max = 0.25  # too much path_angle can cause jerky steering
     self.path_offset_max = 1.50  # too much path_offset can cause jerky steering
     self.curvature_max = 0.015  # too much curvature can cause steering windup
     self.curvature_rate_max = 0.001023  # from dbc files

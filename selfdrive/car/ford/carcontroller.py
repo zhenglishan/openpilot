@@ -102,7 +102,7 @@ class CarController(CarControllerBase):
     # Curvature variables
     self.lane_change_factor = 0.65  #how much of predicted curvature do we actually use if a lane chagne is active (because desired curvatureis too aggressive)
     self.requested_curvature_filtered = FirstOrderFilter(0.0, 0.3, 0.05)  # filter for apply_curvature
-    self.pc_blend_ratio = 0.60 # 6% Predicted Curvature and 40% Desired Curvature
+    self.pc_blend_ratio = 0.80 # 6% Predicted Curvature and 40% Desired Curvature
     self.curvature_lookup_time =  CP.steerActuatorDelay # how far into the future do we need to look for curvature signal
 
     # Curvature rate variables
@@ -121,7 +121,7 @@ class CarController(CarControllerBase):
     self.path_angle_deque = deque(maxlen=self.path_angle_filter_samples) # deque to hold the samples
     self.path_angle_wheel_angle_conversion = 0.0017 # degrees to milliradians
     self.path_angle_speed_bp = [4.4, 40.23]  # what speeds to adjust path_angle_speed_factor over.
-    self.path_angle_low_speed_factor = 1.65 # path_angle_speed_factor at 4.45 m/s
+    self.path_angle_low_speed_factor = 4.65 # path_angle_speed_factor at 4.45 m/s
     self.path_angle_high_speed_factor = 1.0 # path_angle_speed_factor at 40.23 m/s
 
     # max absolute values for all four signals

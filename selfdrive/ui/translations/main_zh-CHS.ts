@@ -1086,7 +1086,7 @@ Please use caution when using this feature. Only use the blinker when traffic an
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Tuning Profile</source>
+        <source>调校配置文件</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

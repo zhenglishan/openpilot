@@ -4,7 +4,7 @@ from cereal import car  # needed for pretty much everything in comma
 from openpilot.common.filter_simple import FirstOrderFilter
 from opendbc.can.packer import CANPacker  # used for canbus messages
 from openpilot.common.numpy_fast import clip, interp  # used for lots of interpolations and clipping
-from openpilot.selfdrive.car import DT_CTRL, apply_std_steer_angle_limits  # for applying safety limits
+from openpilot.selfdrive.car import apply_std_steer_angle_limits #, DT_CTRL  # for applying safety limits
 from openpilot.selfdrive.car.ford import fordcan  # ford specific canbus messages
 from openpilot.selfdrive.car.ford.values import CarControllerParams, FordFlags, FordFlagsSP
 from openpilot.common.params import Params
@@ -50,7 +50,6 @@ class CarController(CarControllerBase):
 
     self.params = Params()  # create a shortcut for params object
 
-    self.params.put('FordMenuAllowed', '1')
     self.CP = CP
     self.VM = VM
     self.packer = CANPacker(dbc_name)
@@ -92,47 +91,61 @@ class CarController(CarControllerBase):
     ################################## lateral control parameters ##############################################
 
     # Variables to initialize (these get updated every scan as part of the control code)
-    self.path_lookup_time = 0.5  # how far into the future to we need to look for our path_angle signals.
+    self.path_lookup_time = CP.steerActuatorDelay  # how far into the future to we need to look for our path_angle signals.
     self.precision_type = 1  # precise or comfort
-    self.human_turn_frames = 0  # how many scans has a human been turning the wheel
     self.human_turn = False  # have we detected a human override in a turn
     self.steer_warning = False # warning for steering limits exceeded
     self.steer_warning_count = 0 # count how many cycles the warning has existed
+    self.enable_AdvLatCtrl = True # Updated form UI: enable Advanced Lane Control
+    self.tuning_profile_UI = 4 # 1: Low, 2: Mid, 3: High, 4: UI
+    self.pc_blend_ratio = 0.5
+    self.path_angle_high_speed_factor = 5.0
+    self.path_angle_high_curvature_factor = 0.17
 
     # Curvature variables
-    self.lane_change_factor = 0.65  #how much of predicted curvature do we actually use if a lane chagne is active (because desired curvatureis too aggressive)
+    self.lane_change_factor_bp = [4.4, 40.23] # what speed to adjust lane_change_factor
+    self.lane_change_factor_low = 0.95 # lane_change_factor at 4.4 m/s
+    self.lane_change_factor_high = 0.75 # updated from UI: lane_change_factor at 40.23 m/s
     self.requested_curvature_filtered = FirstOrderFilter(0.0, 0.3, 0.05)  # filter for apply_curvature
-    self.pc_blend_ratio = 0.65 # 6% Predicted Curvature and 40% Desired Curvature
+    self.pc_blend_ratio_low = 0.50 # 50% Predicted Curvature and 50% Desired Curvature
+    self.pc_blend_ratio_mid = 0.40 # 40% Predicted Curvature and 60% Desired Curvature
+    self.pc_blend_ratio_high = 0.30 # 30% Predicted Curvature and 70% Desired Curvature
+    self.pc_blend_ratio_UI = 0.40 # 40% Predicted Curvature and 60% Desired Curvature
     self.curvature_lookup_time =  CP.steerActuatorDelay # how far into the future do we need to look for curvature signal
 
     # Curvature rate variables
     self.curvature_rate_delta_t = 0.3  # [s] used in denominator for curvature rate calculation
     self.curvature_rate_deque = deque(maxlen=int(round(self.curvature_rate_delta_t / 0.05)))  # 0.3 seconds at 20Hz
 
-    ############################ path offset variables
-    self.path_offset_lat_accel_adjust_scale = 0.00 # this variable was calculated in plot_juggler.  It's used to help determine path_offset in curves.
+    # path offset variables
     self.custom_path_offset = 0.0 # updated from UI: applies a custom offset to help with in-lane positioning
     self.offset_lookup_time = 0.20 # time into the future to use for calculating path_offset
     self.lane_width_tolerance_factor = 0.75
     self.min_laneline_confidence_bp = [0.6, 0.8]
+    self.enable_lanefull_mode = True
 
-    ########################### path angle variables
-    self.path_angle_filter_samples = 6 # number of samples to use for the moving average filter
+    # path angle variables
+    self.path_angle_filter_samples = 10 # number of samples to use for the moving average filter
     self.path_angle_deque = deque(maxlen=self.path_angle_filter_samples) # deque to hold the samples
     self.path_angle_wheel_angle_conversion = 0.0017 # degrees to milliradians
     self.path_angle_speed_bp = [4.4, 40.23]  # what speeds to adjust path_angle_speed_factor over.
-    self.path_angle_low_speed_factor = 2.0 # path_angle_speed_factor at 4.45 m/s
-    self.path_angle_high_speed_factor = 0.80 # path_angle_speed_factor at 40.23 m/s
+    self.path_angle_low_speed_factor = 0.05 # path_angle_speed_factor at 4.45 m/s
+    self.path_angle_high_speed_factor_low = 2.25 # path_angle_speed_factor at 40.23 m/s
+    self.path_angle_high_speed_factor_mid = 5.0 # path_angle_speed_factor at 40.23 m/s
+    self.path_angle_high_speed_factor_high = 7.5 # path_angle_speed_factor at 40.23 m/s
+    self.path_angle_high_speed_factor_UI = 5.0 # path_angle_speed_factor at 40.23 m/s
+    self.path_angle_curvature_factor_bp = [0.00025, 0.001] # what curvature to adjust path_angle.
+    self.path_angle_low_curvature_factor = 1.0 # path_angle_curvature_factor at 0.001
+    self.path_angle_high_curvature_factor_low = 0.20 # path_angle_curvature_factor at 0.002
+    self.path_angle_high_curvature_factor_mid = 0.22 # path_angle_curvature_factor at 0.002
+    self.path_angle_high_curvature_factor_high = 0.25 # path_angle_curvature_factor at 0.002
+    self.path_angle_high_curvature_factor_UI = 0.22 # path_angle_curvature_factor at 0.002
 
     # max absolute values for all four signals
     self.path_angle_max = 0.25  # too much path_angle can cause jerky steering
     self.path_offset_max = 1.50  # too much path_offset can cause jerky steering
-    self.curvature_max = 0.015  # too much curvature can cause steering windup
+    self.curvature_max = 0.01  # too much curvature can cause steering windup
     self.curvature_rate_max = 0.001023  # from dbc files
-
-    # human turn detection parameters
-    self.human_turn_dur_threshold = 0.5  # how long does a human need to be turning the wheel before we consider it an over-ride instead of an adjustment
-    self.human_turn_dur_frames = int(self.human_turn_dur_threshold / (DT_CTRL * 5))  # convert time to scans
 
     # values from previous frame
     self.curvature_rate_last = 0.0
@@ -166,6 +179,78 @@ class CarController(CarControllerBase):
     # Define the Ford Variables object
     self.fordVariables = None
     self.up_down_button_last = [0, 0, 0, 0]
+
+    # Lane change transition tracking
+    self.post_lane_change_timer = 0
+    self.post_lane_change_active = False
+    self.lane_change_last = False  # Track previous lane change state
+    self.pre_lane_change_values = {
+        'path_angle': 0.0,
+        'path_offset': 0.0,
+        'desired_curvature_rate': 0.0
+    }
+
+    # Maximum allowed changes per frame
+    self.max_path_angle_change = 0.00125
+    self.max_path_offset_change = 0.0025
+    self.max_curvature_rate_change = 0.0001
+
+  def handle_post_lane_change_transition(self, path_angle, path_offset, desired_curvature_rate):
+    """
+    Manages smooth transition of control variables after lane change
+    Returns: Tuple of (path_angle, path_offset, desired_curvature_rate)
+    """
+    # Detect lane change completion (transition from True to False)
+    if self.lane_change_last and not self.lane_change:
+        self.post_lane_change_active = True
+        self.post_lane_change_timer = 0
+        # Store current values as starting point
+        self.pre_lane_change_values = {
+            'path_angle': 0.0,  # Start from zero since we're coming out of lane change
+            'path_offset': 0.0,
+            'desired_curvature_rate': 0.0
+        }
+
+    # Update previous lane change state
+    self.lane_change_last = self.lane_change
+
+    # If we're in post-lane change state
+    if self.post_lane_change_active:
+        self.post_lane_change_timer += 1
+
+        # Apply smooth transition using rate limiting
+        new_path_angle = clip(
+            path_angle,
+            self.pre_lane_change_values['path_angle'] - self.max_path_angle_change,
+            self.pre_lane_change_values['path_angle'] + self.max_path_angle_change
+        )
+
+        new_path_offset = clip(
+            path_offset,
+            self.pre_lane_change_values['path_offset'] - self.max_path_offset_change,
+            self.pre_lane_change_values['path_offset'] + self.max_path_offset_change
+        )
+
+        new_curvature_rate = clip(
+            desired_curvature_rate,
+            self.pre_lane_change_values['desired_curvature_rate'] - self.max_curvature_rate_change,
+            self.pre_lane_change_values['desired_curvature_rate'] + self.max_curvature_rate_change
+        )
+
+        # Update stored values
+        self.pre_lane_change_values = {
+            'path_angle': new_path_angle,
+            'path_offset': new_path_offset,
+            'desired_curvature_rate': new_curvature_rate
+        }
+
+        # Exit transition state after 40 frames
+        if self.post_lane_change_timer >= 160:
+            self.post_lane_change_active = False
+
+        return (new_path_angle, new_path_offset, new_curvature_rate)
+
+    return (path_angle, path_offset, desired_curvature_rate)
 
   def update(self, CC, CS, now_nanos, model_data=None):
     can_sends = []
@@ -213,6 +298,28 @@ class CarController(CarControllerBase):
         steeringAngleDeg_PV = CS.out.steeringAngleDeg
         steeringAngleDeg_SP = actuators.steeringAngleDeg
 
+        # determine tuning profile
+        if self.tuning_profile_UI == 1:
+          self.pc_blend_ratio = self.pc_blend_ratio_low
+          self.path_angle_high_speed_factor = self.path_angle_high_speed_factor_low
+          self.path_angle_high_curvature_factor = self.path_angle_high_curvature_factor_low
+        elif self.tuning_profile_UI == 2:
+          self.pc_blend_ratio = self.pc_blend_ratio_mid
+          self.path_angle_high_speed_factor = self.path_angle_high_speed_factor_mid
+          self.path_angle_high_curvature_factor = self.path_angle_high_curvature_factor_mid
+        elif self.tuning_profile_UI == 3:
+          self.pc_blend_ratio = self.pc_blend_ratio_high
+          self.path_angle_high_speed_factor = self.path_angle_high_speed_factor_high
+          self.path_angle_high_curvature_factor = self.path_angle_high_curvature_factor_high
+        elif self.tuning_profile_UI == 4:
+          self.pc_blend_ratio = self.pc_blend_ratio_UI
+          self.path_angle_high_speed_factor = self.path_angle_high_speed_factor_UI
+          self.path_angle_high_curvature_factor = self.path_angle_high_curvature_factor_UI
+
+        # determine if we are using Advanced Lateral Control
+        if not self.enable_AdvLatCtrl:
+          self.pc_blend_ratio = 0.35 # 35% Predicted Curvature and 65% Desired Curvature
+
         # calculate current curvature and model desired curvature
         current_curvature = -CS.out.yawRate / max(CS.out.vEgoRaw, 0.1)  # use canbus data to calculate current_curvature
         self.fordVariables.currentCurvature01 = float(current_curvature)
@@ -230,10 +337,6 @@ class CarController(CarControllerBase):
           predicted_curvature = interp(self.curvature_lookup_time, ModelConstants.T_IDXS, curvatures)
           self.fordVariables.predictedCurvature01 = float(predicted_curvature)
 
-          # calcaulte lateral acceleration for future use
-          lat_accel = interp(self.curvature_lookup_time, ModelConstants.T_IDXS, model_data.acceleration.y)
-          self.fordVariables.latAccel01 = float(lat_accel)
-
           # equate apply_curvature to a blend of desired and predicted_curvature and apply curvature limits
           requested_curvature = (predicted_curvature * self.pc_blend_ratio) + (desired_curvature * (1 - self.pc_blend_ratio))
 
@@ -242,23 +345,36 @@ class CarController(CarControllerBase):
           self.fordVariables.requestedCurvature01 = float(requested_curvature)
 
           # determine if a lane change is active
-          if model_data.meta.laneChangeState == 1 or model_data.meta.laneChangeState == 2:
+          if (model_data.meta.laneChangeState == 1 or model_data.meta.laneChangeState == 2 or model_data.meta.laneChangeState == 3):
             self.lane_change = True
           else:
             self.lane_change = False
 
-          # in curves, use 85% desired curvature to avoid aborted lane changes
-          if abs(desired_curvature) > 0.002:
-            self.lane_change_factor = 0.15
+          # determine lane_change_factor based on speed
+          lane_change_factor = interp(CS.out.vEgoRaw, self.lane_change_factor_bp, [self.lane_change_factor_low, self.lane_change_factor_high])
+          self.fordVariables.laneChangeFactor01 = float(lane_change_factor)
 
-          # if changing lanes, use a blend of PC and DC to smooth out the lane change.
-          if self.lane_change:
-            requested_curvature = (predicted_curvature * self.lane_change_factor) + (desired_curvature * (1 - self.lane_change_factor))
+          # if changing lanes, modify curvature to smooth out the lane change
+          if self.lane_change and (model_data.meta.laneChangeDirection == 1): # if we are changing lanes to the left
+            if desired_curvature < 0: # and the curvature is taking us to the left
+              requested_curvature = requested_curvature * lane_change_factor # reduce the curvature to smooth out the lane change
+            else:
+              requested_curvature = desired_curvature # if we are moving back right to correct for over travel, do not reduce curvature
+
+            self.precision_type = 0 # use comfort mode
+
+          if self.lane_change and (model_data.meta.laneChangeDirection == 2): # if we are changing lanes to the right
+            if desired_curvature > 0: # and the curvature is taking us to the right
+              requested_curvature = requested_curvature * lane_change_factor # reduce the curvature to smooth out the lane change
+            else:
+              requested_curvature = desired_curvature # if we are moving back left to correct for over travel, do not reduce curvature
+
+            self.precision_type = 0 # use comfort mode
 
           apply_curvature = apply_ford_curvature_limits(requested_curvature, self.apply_curvature_last, current_curvature, CS.out.vEgoRaw)
 
-          # detect if steering was limited
-          if (requested_curvature != apply_curvature) and (not steeringPressed):
+          # detect if steering was limited (lanes changes always trigger, but complete just fine)
+          if (requested_curvature != apply_curvature) and (not steeringPressed) and (not self.lane_change):
             self.steering_limited = True
           else:
             self.steering_limited =False
@@ -289,8 +405,9 @@ class CarController(CarControllerBase):
             desired_curvature_rate = 0.0
           self.fordVariables.desiredCurvatureRate01 = float(desired_curvature_rate)
 
-          # Precise seems to work best when using high levels of predicted curvature
-          self.precision_type = 1
+          # zero all non-curvature variables during lane changes
+          if self.lane_change:
+            desired_curvature_rate = 0.0
 
           # ramp_type 2 seems to work best with high levels of predicted curvature
           ramp_type = 2
@@ -298,14 +415,6 @@ class CarController(CarControllerBase):
           # get path offset from model.position.y
           path_offset_position = interp(self.offset_lookup_time, ModelConstants.T_IDXS, model_data.position.y)
           self.fordVariables.pathOffsetPosition01 = float(path_offset_position)
-
-          # calculate how much to adjust the path_offset due to lateral acceleration
-          path_offset_adjustment = lat_accel * self.path_offset_lat_accel_adjust_scale
-          self.fordVariables.pathOffsetAdjustment01 = float(path_offset_adjustment)
-
-          # calculate path_offset_model portion of of path_offset_total
-          path_offset_model = (path_offset_position - path_offset_adjustment) #+ self.custom_path_offset)
-          self.fordVariables.pathOffsetModel01 = float(path_offset_model)
 
           # now get path offset from lanelines
           path_offset_lanelines = (model_data.laneLines[1].y[0] + model_data.laneLines[2].y[0]) / 2
@@ -319,6 +428,8 @@ class CarController(CarControllerBase):
 
           # determine laneline confidence
           laneline_confidence = min(model_data.laneLineProbs[1], model_data.laneLineProbs[2], laneline_width_tolerance)
+          if not self.enable_lanefull_mode:
+            laneline_confidence = 0.0
           self.fordVariables.lanelineConfidence01 = float(laneline_confidence)
 
           # determine laneline path offset scale
@@ -328,18 +439,12 @@ class CarController(CarControllerBase):
           # trap custom path offset for analysis in trends
           self.fordVariables.customPathOffset01 = float(self.custom_path_offset)
 
+          # get the total path_offset combining model and lanelines
+          path_offset_total = (path_offset_position * (1-laneline_path_offset_scale) + (path_offset_lanelines * laneline_path_offset_scale)) + self.custom_path_offset
+
           # no path_offset during lane changes (it will fight you until it swaps to new lane if you don't set to zero)
           if self.lane_change:
-            if apply_curvature > 0 and self.custom_path_offset > 0:
-              path_offset_total = self.custom_path_offset
-            else:
-              path_offset_total = 0
-            if apply_curvature < 0 and self.custom_path_offset < 0:
-              path_offset_total = self.custom_path_offset
-            else:
-              path_offset_total = 0
-          else:
-            path_offset_total = (path_offset_model * (1-laneline_path_offset_scale) + (path_offset_lanelines * laneline_path_offset_scale)) + self.custom_path_offset
+            path_offset_total = 0
 
           self.fordVariables.pathOffsetTotal01 = float(path_offset_total)
 
@@ -351,18 +456,23 @@ class CarController(CarControllerBase):
           path_angle_speed_factor = interp(abs(CS.out.vEgoRaw), self.path_angle_speed_bp, path_angle_speed_v)
           self.fordVariables.pathAngleSpeedFactor01 = float(path_angle_speed_factor)
 
+          # calculate the path_angle_curvature_factor
+          path_angle_curvature_factor = interp(abs(apply_curvature), self.path_angle_curvature_factor_bp, [self.path_angle_low_curvature_factor, self.path_angle_high_curvature_factor])
+          self.fordVariables.pathAngleCurvatureFactor01 = float(path_angle_curvature_factor)
 
           # calculate steering angle associated with the base path (predicted_curvature)
           steering_wheel_delta = steeringAngleDeg_PV - steeringAngleDeg_SP
           self.fordVariables.steeringWheelDelta01 = float(steering_wheel_delta)
 
           # calculate wheel angle from path_offset
-          steerAnglePathOffset = steering_wheel_delta * self.path_angle_wheel_angle_conversion * path_angle_speed_factor
+          steerAnglePathOffset = steering_wheel_delta * self.path_angle_wheel_angle_conversion * path_angle_speed_factor * path_angle_curvature_factor
           self.fordVariables.steerAnglePathOffset01 = float(steerAnglePathOffset)
 
           # filter path_angle for smoothing
           self.path_angle_deque.append(steerAnglePathOffset)
           path_angle_model = sum(self.path_angle_deque) / len(self.path_angle_deque) if len(self.path_angle_deque) > 0 else 0.0
+
+          # zero path_angle during lane changes
           if self.lane_change:
             path_angle_model = 0.0
           self.fordVariables.pathAngleModel01 = float(path_angle_model)
@@ -379,10 +489,21 @@ class CarController(CarControllerBase):
           path_offset = clip(path_offset, -self.path_offset_max, self.path_offset_max)
           path_angle = clip(path_angle, -self.path_angle_max, self.path_angle_max)
 
+          # Apply post lane change transition logic
+          path_angle, path_offset, desired_curvature_rate = self.handle_post_lane_change_transition(
+              path_angle, path_offset, desired_curvature_rate
+          )
+
           # rate limit path_angle
-          path_angle_roc = interp(abs(CS.out.vEgoRaw), [5, 25],  [0.003, 0.002])
+          path_angle_roc = interp(abs(CS.out.vEgoRaw), [5, 25], [0.003, 0.002])
           path_angle = clip(path_angle, self.path_angle_last - path_angle_roc, self.path_angle_last + path_angle_roc)
 
+          # if we are not using Advanced Lateral Control, zero out path_angle and path_offset
+          if not self.enable_AdvLatCtrl:
+            path_angle = 0.0
+            path_offset = 0.0
+
+          # trap values for analysis in trends
           self.fordVariables.pathAngleRoc01 = float(path_angle_roc)
           self.fordVariables.applyCurvature02 = float(apply_curvature)
           self.fordVariables.desiredCurvatureRate02 = float(desired_curvature_rate)

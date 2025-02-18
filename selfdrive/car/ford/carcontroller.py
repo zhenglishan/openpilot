@@ -135,7 +135,7 @@ class CarController(CarControllerBase):
     self.path_angle_high_speed_factor_high = 7.5 # path_angle_speed_factor at 40.23 m/s
     self.path_angle_high_speed_factor_UI = 5.0 # path_angle_speed_factor at 40.23 m/s
     self.path_angle_curvature_factor_bp = [0.00025, 0.001] # what curvature to adjust path_angle.
-    self.path_angle_low_curvature_factor = 1.0 # path_angle_curvature_factor at 0.001
+    self.path_angle_low_curvature_factor = 2.0 # path_angle_curvature_factor at 0.001
     self.path_angle_high_curvature_factor_low = 0.20 # path_angle_curvature_factor at 0.002
     self.path_angle_high_curvature_factor_mid = 0.22 # path_angle_curvature_factor at 0.002
     self.path_angle_high_curvature_factor_high = 0.25 # path_angle_curvature_factor at 0.002

@@ -135,7 +135,7 @@ class CarController(CarControllerBase):
     self.path_angle_high_speed_factor_high = 7.5 # path_angle_speed_factor at 40.23 m/s
     self.path_angle_high_speed_factor_UI = 5.0 # path_angle_speed_factor at 40.23 m/s
     self.path_angle_curvature_factor_bp = [0.00025, 0.001] # what curvature to adjust path_angle.
-    self.path_angle_low_curvature_factor = 2.0 # path_angle_curvature_factor at 0.001
+    self.path_angle_low_curvature_factor = 1.0 # path_angle_curvature_factor at 0.001
     self.path_angle_high_curvature_factor_low = 0.20 # path_angle_curvature_factor at 0.002
     self.path_angle_high_curvature_factor_mid = 0.22 # path_angle_curvature_factor at 0.002
     self.path_angle_high_curvature_factor_high = 0.25 # path_angle_curvature_factor at 0.002
@@ -144,7 +144,7 @@ class CarController(CarControllerBase):
     # max absolute values for all four signals
     self.path_angle_max = 0.25  # too much path_angle can cause jerky steering
     self.path_offset_max = 1.50  # too much path_offset can cause jerky steering
-    self.curvature_max = 0.015  # too much curvature can cause steering windup
+    self.curvature_max = 0.01  # too much curvature can cause steering windup
     self.curvature_rate_max = 0.001023  # from dbc files
 
     # values from previous frame

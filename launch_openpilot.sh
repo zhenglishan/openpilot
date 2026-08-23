@@ -9,7 +9,7 @@ C3_LAUNCH_SH="./sunnypilot/system/hardware/c3/launch_chffrplus.sh"
 MODEL="$(tr -d '\0' < "/sys/firmware/devicetree/base/model")"
 export MODEL
 
-if [ "$MODEL" = "comma tici" ]; then
+if [ "$MODEL" = "comma tici" ] || [ "$MODEL" = "comma three" ]; then
   # Force a failure if the launcher doesn't exist
   [ -x "$C3_LAUNCH_SH" ] || false
 

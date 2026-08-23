@@ -211,6 +211,13 @@ class HardwareBase(ABC):
   def recover_internal_panda(self):
     pass
 
+  # BluePilot C3: DOS panda and the LTE modem share a USB hub.
+  def defer_modem_usb(self):
+    """Keep LTE powered but block USB enumeration until panda is stable."""
+
+  def allow_modem_usb(self):
+    """Allow LTE USB enumeration after panda is connected."""
+
   def get_modem_data_usage(self):
     return -1, -1
 

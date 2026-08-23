@@ -328,7 +328,9 @@ process_submodules() {
 
     cd "$BUILD_DIR" || exit 1
 
-    local submodules=("msgq_repo" "opendbc_repo" "rednose_repo" "panda" "tinygrad_repo" "teleoprtc_repo")
+    # BluePilot C3: panda is intentionally vendored so the F4/DOS firmware is
+    # versioned together with BP7 and must not be reprocessed as a submodule.
+    local submodules=("msgq_repo" "opendbc_repo" "rednose_repo" "tinygrad_repo" "teleoprtc_repo")
 
     for sub in "${submodules[@]}"; do
         if [ -d "$sub" ]; then

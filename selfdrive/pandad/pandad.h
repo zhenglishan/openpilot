@@ -9,6 +9,8 @@ void pandad_main_thread(std::string serial);
 
 // deprecated devices
 static const std::vector<cereal::PandaState::PandaType> SUPPORTED_PANDA_TYPES = {
+  // BluePilot C3: the internal DOS panda is STM32F4 and communicates over USB.
+  cereal::PandaState::PandaType::DOS,
   cereal::PandaState::PandaType::RED_PANDA,
   cereal::PandaState::PandaType::TRES,
   cereal::PandaState::PandaType::CUATRO,

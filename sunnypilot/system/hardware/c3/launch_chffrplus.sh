@@ -17,29 +17,21 @@ function agnos_init {
   sudo chgrp gpu /dev/adsprpc-smd /dev/ion /dev/kgsl-3d0
   sudo chmod 660 /dev/adsprpc-smd /dev/ion /dev/kgsl-3d0
 
-
-  if [ $(< /VERSION) != "$AGNOS_VERSION" ]; then
+  if [ "$(cat /VERSION 2>/dev/null)" != "$AGNOS_VERSION" ]; then
     AGNOS_PY="$DIR/system/hardware/tici/agnos.py"
+    # BluePilot C3: use the dedicated AGNOS 16 manifest without changing the
+    # BP7 C3X/C4 AGNOS 18.4 manifest.
     MANIFEST="$SP_C3_DIR/agnos.json"
-    if $AGNOS_PY --verify $MANIFEST; then
+    if $AGNOS_PY --verify "$MANIFEST"; then
       sudo reboot
     fi
-    $DIR/system/hardware/tici/updater $AGNOS_PY $MANIFEST
+    "$DIR/system/hardware/tici/updater" "$AGNOS_PY" "$MANIFEST"
   fi
 }
 
 function launch {
   # Remove orphaned git lock if it exists on boot
   [ -f "$DIR/.git/index.lock" ] && rm -f $DIR/.git/index.lock
-
-  # Check to see if there's a valid overlay-based update available. Conditions
-  # are as follows:
-  #
-  # 1. The DIR init file has to exist, with a newer modtime than anything in
-  #    the DIR Git repo. This checks for local development work or the user
-  #    switching branches/forks, which should not be overwritten.
-  # 2. The FINALIZED consistent file has to exist, indicating there's an update
-  #    that completed successfully and synced to disk.
 
   if [ -f "${DIR}/.overlay_init" ]; then
     find ${DIR}/.git -newer ${DIR}/.overlay_init | grep -q '.' 2> /dev/null
@@ -60,32 +52,29 @@ function launch {
           exec "${LAUNCHER_LOCATION}"
         else
           echo "openpilot backup found, not updating"
-          # TODO: restore backup? This means the updater didn't start after swapping
         fi
       fi
     fi
   fi
 
-  # handle pythonpath
   ln -sfn $(pwd) /data/pythonpath
   export PYTHONPATH="$PWD"
 
-  # hardware specific init
   if [ -f /AGNOS ]; then
     agnos_init
+    # BluePilot C3: keep the EC25 unconfigured until USB pandad is connected.
+    python3 -c "from openpilot.system.hardware.tici.modem_usb import defer_modem_usb; defer_modem_usb()" || true
   fi
 
-  # write tmux scrollback to a file
   tmux capture-pane -pq -S-1000 > /tmp/launch_log
 
-  # start manager
-  cd $DIR/system/manager
-  if [ ! -f $DIR/prebuilt ]; then
+  cd "$DIR/system/manager"
+  if [[ ! -s "$DIR/prebuilt" ]] || [[ ! -x "$DIR/selfdrive/pandad/pandad" ]]; then
+    rm -f "$DIR/prebuilt"
     ./build.py
   fi
   ./manager.py
 
-  # if broken, keep on screen error
   while true; do sleep 1; done
 }
 

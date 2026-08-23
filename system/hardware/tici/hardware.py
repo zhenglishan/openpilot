@@ -35,8 +35,10 @@ def affine_irq(val, action):
 def get_device_type():
   # lru_cache and cache can cause memory leaks when used in classes
   with open("/sys/firmware/devicetree/base/model") as f:
-    model = f.read().strip('\x00')
-  return model.split('comma ')[-1]
+    model = f.read().strip('\x00').lower()
+  device = model.split('comma ', 1)[-1]
+  # BluePilot C3: older images may report "comma three" instead of "comma tici".
+  return "tici" if device == "three" else device
 
 def wpa_supplicant_cmd(cmd: str, timeout: float = 0.2) -> dict[str, str]:
   with socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM) as sock:
@@ -423,6 +425,15 @@ class Tici(HardwareBase):
 
   def has_internal_panda(self):
     return True
+
+  # BluePilot C3: DOS panda and the EC25 modem share the internal USB hub.
+  def defer_modem_usb(self):
+    from openpilot.system.hardware.tici.modem_usb import defer_modem_usb
+    defer_modem_usb()
+
+  def allow_modem_usb(self):
+    from openpilot.system.hardware.tici.modem_usb import allow_modem_usb
+    allow_modem_usb()
 
   def reset_internal_panda(self):
     gpio_init(GPIO.STM_RST_N, True)

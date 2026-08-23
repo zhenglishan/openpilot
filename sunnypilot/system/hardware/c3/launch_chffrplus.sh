@@ -25,7 +25,16 @@ function agnos_init {
     if $AGNOS_PY --verify "$MANIFEST"; then
       sudo reboot
     fi
-    "$DIR/system/hardware/tici/updater" "$AGNOS_PY" "$MANIFEST"
+    # BluePilot: AGNOS 12.8 does not provide every Python dependency expected by BP7's
+    # graphical updater. Once the BP virtualenv has been built, fall back to
+    # the same agnos.py flasher in that self-contained environment.
+    if ! "$DIR/system/hardware/tici/updater" "$AGNOS_PY" "$MANIFEST"; then
+      VENV_PY="$DIR/.venv/bin/python"
+      if [ -x "$VENV_PY" ] && sudo "$VENV_PY" "$AGNOS_PY" --swap "$MANIFEST"; then
+        sudo reboot
+      fi
+    fi
+    # End BluePilot
   fi
 }
 

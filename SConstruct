@@ -140,8 +140,11 @@ if arch == "larch64":
   env["CC"] = "clang"
   env["CXX"] = "clang++"
   env.Append(LIBPATH=[
+    "/usr/local/lib",
+    "/system/vendor/lib64",
     "/usr/lib/aarch64-linux-gnu",
   ])
+  env.Append(CPPPATH=["#third_party/linux/include"])
   arch_flags = ["-D__TICI__", "-mcpu=cortex-a57", "-DQCOM2"]
   env.Append(CCFLAGS=arch_flags)
   env.Append(CXXFLAGS=arch_flags)

@@ -194,9 +194,12 @@ def finalize_update() -> None:
 
 
 def get_agnos_update_files(device_type: str) -> tuple[str, str]:
+  # BluePilot: the original comma three (tici) requires the dedicated C3
+  # launcher environment and AGNOS 18.4 manifest.
   if device_type == "tici":
     return ("sunnypilot/system/hardware/c3/launch_env.sh",
             "sunnypilot/system/hardware/c3/agnos.json")
+  # End BluePilot
   return "launch_env.sh", "system/hardware/tici/agnos.json"
 
 

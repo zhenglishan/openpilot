@@ -932,6 +932,13 @@ static safety_config ford_init(uint16_t param) {
   ford_bp_pinion_curvature = pinion_enabled;
   ford_bp_pinion_params = pinion_enabled ? &ford_pinion_geometry[pinion_geometry_index] : &ford_pinion_geometry[0];
 
+  // Reset BluePilot's Ford angle-mode state whenever this safety model is initialized. These
+  // values are populated from transmitted Lane_Assist_Data1 frames and must not leak across a
+  // safety-mode change (or a fresh test instance) before the first new status frame arrives.
+  ford_bp_angle_mode_engaged = false;
+  ford_bp_shadow_curvature_raw = 0;
+  desired_path_angle_last = 0;
+
   safety_config ret;
   if (ford_canfd) {
     ret = ford_longitudinal ? BUILD_SAFETY_CFG(ford_rx_checks, FORD_CANFD_LONG_TX_MSGS) : \

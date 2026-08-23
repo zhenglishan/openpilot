@@ -21,6 +21,7 @@ NO_PANDA_RESET_SETTLE_S = 1.0
 NO_PANDA_POLL_S = 0.2
 NO_PANDA_RESET_EVERY_S = 5.0
 PANDA_STABLE_BEFORE_MODEM_S = 2.0
+PANDA_USB_ONLY = os.getenv("PANDA_USB_ONLY") == "1"
 
 # Avoid immediate GPIO reset on first empty list(); wait one reset interval.
 _last_panda_reset_at = time.monotonic()
@@ -39,7 +40,7 @@ def reset_and_wait_for_usb() -> None:
 
 def list_pandas_for_connect() -> list[str]:
   """List pandas; if USB not ready yet, poll, and only reset every few seconds."""
-  serials = Panda.list()
+  serials = Panda.list(usb_only=PANDA_USB_ONLY)
   if serials:
     return serials
   now = time.monotonic()
@@ -47,7 +48,7 @@ def list_pandas_for_connect() -> list[str]:
     reset_and_wait_for_usb()
   else:
     time.sleep(NO_PANDA_POLL_S)
-  return Panda.list()
+  return Panda.list(usb_only=PANDA_USB_ONLY)
 
 
 def enable_modem_usb_after_panda() -> None:
@@ -109,10 +110,11 @@ def flash_panda(panda_serial: str):
 
 
 def check_panda_support(panda_serials: list[str]) -> list[str]:
-  spi_serials = set(Panda.spi_list())
-  for serial in panda_serials:
-    if serial in spi_serials:
-      return [serial]
+  if not PANDA_USB_ONLY:
+    spi_serials = set(Panda.spi_list())
+    for serial in panda_serials:
+      if serial in spi_serials:
+        return [serial]
 
   for serial in panda_serials:
     panda = Panda(serial)
@@ -167,12 +169,13 @@ def main() -> None:
           cloudlog.exception("pandad.uncaught_exception")
 
       # Flash all Pandas in DFU mode
-      for serial in PandaDFU.list():
+      dfu_serials = PandaDFU.usb_list() if PANDA_USB_ONLY else PandaDFU.list()
+      for serial in dfu_serials:
         cloudlog.info(f"Panda in DFU mode found, flashing recovery {serial}")
         PandaDFU(serial).recover()
         time.sleep(1)
 
-      panda_serials = Panda.list()
+      panda_serials = Panda.list(usb_only=PANDA_USB_ONLY)
       if len(panda_serials):
         # BluePilot: custom flasher for xnor's Rivian Longitudinal Upgrade Kit.
         flash_rivian_long(panda_serials)

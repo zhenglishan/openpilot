@@ -12,12 +12,16 @@
 #include "common/util.h"
 
 const bool PANDAD_MAXOUT = getenv("PANDAD_MAXOUT") != nullptr;
+const bool PANDA_USB_ONLY = getenv("PANDA_USB_ONLY") != nullptr;
 
 Panda::Panda(std::string serial) {
   try {
     handle = std::make_unique<PandaUsbHandle>(serial);
     LOGW("connected to %s over USB", handle->hw_serial.c_str());
   } catch (const std::exception &) {
+    if (PANDA_USB_ONLY) {
+      throw;
+    }
     handle = std::make_unique<PandaSpiHandle>(serial);
     LOGW("connected to %s over SPI", handle->hw_serial.c_str());
   }
@@ -42,9 +46,11 @@ std::vector<std::string> Panda::list() {
   auto serials = PandaUsbHandle::list();
   // BluePilot C3: DOS is USB, while C3X/C4 remains SPI. Enumerate both so an
   // attached external USB panda cannot hide the internal SPI panda.
-  for (const auto &serial : PandaSpiHandle::list()) {
-    if (std::find(serials.begin(), serials.end(), serial) == serials.end()) {
-      serials.push_back(serial);
+  if (!PANDA_USB_ONLY) {
+    for (const auto &serial : PandaSpiHandle::list()) {
+      if (std::find(serials.begin(), serials.end(), serial) == serials.end()) {
+        serials.push_back(serial);
+      }
     }
   }
   return serials;

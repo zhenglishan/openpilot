@@ -892,7 +892,8 @@ class BluePilotLayout(Widget):
     self._lane_change_factor_high_ang.action_item.set_enabled(is_angle)
     # Curvature-mode items: always visible (Curvature Tuning section), greyed out when angle mode is active
     self._lane_change_factor_high_curv.action_item.set_enabled(is_curv)
-    self._enable_human_turn_detection.action_item.set_enabled(is_curv)
+    # BluePilot: one Human Turn Detection toggle controls both curvature and angle strategies.
+    self._enable_human_turn_detection.action_item.set_enabled(True)
     self._enable_lane_positioning.action_item.set_enabled(is_curv)
     self._custom_path_offset.action_item.set_enabled(is_curv and lane_pos)
     self._enable_lane_full_mode.action_item.set_enabled(is_curv and lane_pos)

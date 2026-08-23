@@ -264,13 +264,12 @@ class LateralAngleExt:
 
     # Human-turn override: sustained driver press + large wheel angle → force lateral inactive
     # (carcontroller drops mode to 0; all signals are zero on the wire) so path_angle can't wind
-    # into a stale command while the driver turns. Always on in angle mode (no param gate) -- the
-    # curv-suffixed human-turn toggle belongs to curvature mode's reset strategy, and the Mach-E
-    # PSCM re-engage stall this prevents is not something a user should be able to opt out of.
+    # into a stale command while the driver turns. The existing UI toggle controls both lateral
+    # strategies; its historical _curv suffix is retained to avoid a disruptive param migration.
     # On release, no jump seed: path_angle_last is 0, so the normal flow below ramps the command
     # back in through the soft ROC -- generous at human-turn speeds, no panda bypass involved.
     self.angle_human_turn_active = self.human_turn_detector.update(
-      True, CS.out.steeringPressed, CS.out.steeringAngleDeg)
+      self.enable_human_turn_detection_curv, CS.out.steeringPressed, CS.out.steeringAngleDeg)
     if self.angle_human_turn_active:
       self.path_angle_last = 0.0
       self.bp_path_angle_final = 0.0

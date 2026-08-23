@@ -117,9 +117,10 @@ class LateralLayoutMici(NavScroller):
     self.high_speed_dampening.set_visible(is_angle)
     self.lane_change_factor_high_ang.set_visible(is_angle)
     self.blinker_min_speed.set_enabled(ui_state.params.get_bool("BlinkerPauseLaneChange"))
+    # BluePilot: one Human Turn Detection toggle controls both curvature and angle strategies.
+    self.enable_human_turn_detection.set_visible(True)
     for item in (
       self.lane_change_factor_high_curv,
-      self.enable_human_turn_detection,
       self.enable_lane_positioning,
       self.enable_lane_full_mode,
       self.custom_profile,

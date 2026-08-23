@@ -69,6 +69,18 @@ class _ForcedDetector:
     pass
 
 
+class _GatedDetector:
+  def __init__(self):
+    self.enabled = None
+
+  def update(self, enabled, *_args):
+    self.enabled = enabled
+    return bool(enabled)
+
+  def reset(self):
+    pass
+
+
 class _FakeParams:
   def __init__(self, values):
     self.values = values
@@ -148,6 +160,19 @@ class TestShadowCurvaturePublishing(unittest.TestCase):
     self.assertTrue(self.ext.angle_human_turn_active)
     self.assertEqual(result.path_angle, 0.0)
     self.assertAlmostEqual(self.ext.bp_kappa_cmd, self.measured)
+
+  def test_human_turn_toggle_controls_angle_mode(self):
+    detector = _GatedDetector()
+    self.ext.human_turn_detector = detector
+    self.ext.enable_human_turn_detection_curv = False
+    self._update()
+    self.assertFalse(detector.enabled)
+    self.assertFalse(self.ext.angle_human_turn_active)
+
+    self.ext.enable_human_turn_detection_curv = True
+    self._update()
+    self.assertTrue(detector.enabled)
+    self.assertTrue(self.ext.angle_human_turn_active)
 
   def test_stall_blip_publishes_measured(self):
     self.ext.stall_blip_frames_left = 3

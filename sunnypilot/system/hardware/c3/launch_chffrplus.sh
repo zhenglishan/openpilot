@@ -19,7 +19,7 @@ function agnos_init {
 
   if [ "$(cat /VERSION 2>/dev/null)" != "$AGNOS_VERSION" ]; then
     AGNOS_PY="$DIR/system/hardware/tici/agnos.py"
-    # BluePilot C3: use the dedicated AGNOS 16 manifest without changing the
+    # BluePilot C3: use the dedicated C3-compatible AGNOS 18.4 manifest without changing the
     # BP7 C3X/C4 AGNOS 18.4 manifest.
     MANIFEST="$SP_C3_DIR/agnos.json"
     if $AGNOS_PY --verify "$MANIFEST"; then

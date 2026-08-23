@@ -1,7 +1,16 @@
 import pytest
 
 from openpilot.common.params import Params
-from openpilot.system.updated.updated import Updater
+from openpilot.system.updated.updated import Updater, get_agnos_update_files
+
+
+@pytest.mark.parametrize(("device_type", "expected"), [
+  ("tici", ("sunnypilot/system/hardware/c3/launch_env.sh", "sunnypilot/system/hardware/c3/agnos.json")),
+  ("tizi", ("launch_env.sh", "system/hardware/tici/agnos.json")),
+  ("mici", ("launch_env.sh", "system/hardware/tici/agnos.json")),
+])
+def test_agnos_update_files(device_type, expected):
+  assert get_agnos_update_files(device_type) == expected
 
 
 @pytest.mark.parametrize(("device_type", "branch", "expected"), [

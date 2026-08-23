@@ -193,12 +193,21 @@ def finalize_update() -> None:
   cloudlog.info("done finalizing overlay")
 
 
+def get_agnos_update_files(device_type: str) -> tuple[str, str]:
+  if device_type == "tici":
+    return ("sunnypilot/system/hardware/c3/launch_env.sh",
+            "sunnypilot/system/hardware/c3/agnos.json")
+  return "launch_env.sh", "system/hardware/tici/agnos.json"
+
+
 def handle_agnos_update() -> None:
   from openpilot.system.hardware.tici.agnos import flash_agnos_update, get_target_slot_number
 
   cur_version = HARDWARE.get_os_version()
-  updated_version = run(["bash", "-c", r"unset AGNOS_VERSION && source launch_env.sh && \
-                          echo -n $AGNOS_VERSION"], OVERLAY_MERGED).strip()
+  launch_env_file, manifest_file = get_agnos_update_files(HARDWARE.get_device_type())
+  launch_env_path = os.path.join(OVERLAY_MERGED, launch_env_file)
+  updated_version = run(["bash", "-c", 'unset AGNOS_VERSION; source "$1"; echo -n "$AGNOS_VERSION"',
+                         "bash", launch_env_path], OVERLAY_MERGED).strip()
 
   cloudlog.info(f"AGNOS version check: {cur_version} vs {updated_version}")
   if cur_version == updated_version:
@@ -210,7 +219,7 @@ def handle_agnos_update() -> None:
   cloudlog.info(f"Beginning background installation for AGNOS {updated_version}")
   set_offroad_alert("Offroad_NeosUpdate", True)
 
-  manifest_path = os.path.join(OVERLAY_MERGED, "system/hardware/tici/agnos.json")
+  manifest_path = os.path.join(OVERLAY_MERGED, manifest_file)
   target_slot_number = get_target_slot_number()
   flash_agnos_update(manifest_path, target_slot_number, cloudlog)
   set_offroad_alert("Offroad_NeosUpdate", False)

@@ -14,15 +14,9 @@ export QCOM_PRIORITY=12
 # unused spidev node, so explicitly prevent pandad from probing it as a C3X/H7.
 export PANDA_USB_ONLY=1
 
-# Keep slot B on the known-good AGNOS 18.4 while validating AGNOS 18.5 on slot A.
-# This prevents a failed A-slot boot from causing an automatic A/B reboot loop.
+# The original comma three requires the C3-compatible AGNOS 18.4 image.
 if [ -z "$AGNOS_VERSION" ]; then
-  C3_BOOT_SLOT="$(sudo abctl --boot_slot 2>/dev/null | tr -d '\r\n')"
-  if [ "$C3_BOOT_SLOT" = "_a" ]; then
-    export AGNOS_VERSION="18.5"
-  else
-    export AGNOS_VERSION="18.4"
-  fi
+  export AGNOS_VERSION="18.4"
 fi
 
 export STAGING_ROOT="/data/safe_staging"

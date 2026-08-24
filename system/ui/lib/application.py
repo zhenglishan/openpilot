@@ -118,7 +118,7 @@ class FontWeight(StrEnum):
 
 # BluePilot: glyphs absent from Noto Sans SC that use the existing Unifont
 # fallback when they are drawn as ordinary text (emoji has its own renderer).
-SIMPLIFIED_CHINESE_UNIFONT_GLYPHS = frozenset("↳⌫⚙✔✕")
+SIMPLIFIED_CHINESE_UNIFONT_GLYPHS = frozenset("↳⌫⚙✔✕‑⇧␣▶◀♥✓")
 # End BluePilot
 
 

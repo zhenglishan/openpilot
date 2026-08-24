@@ -6,11 +6,23 @@ Import('env', 'arch', 'common')
 # build the fonts
 generator = File("#selfdrive/assets/fonts/process.py")
 source_files = Glob("#selfdrive/assets/fonts/*.ttf") + Glob("#selfdrive/assets/fonts/*.otf")
-output_files = [
-  (f"#{Path(f.path).with_suffix('.fnt')}", f"#{Path(f.path).with_suffix('.png')}")
-  for f in source_files
-  if "NotoColor" not in f.name
-]
+output_files = []
+for font_file in source_files:
+  if "NotoColor" in font_file.name:
+    continue
+
+  # BluePilot: the Noto Sans SC variable source generates two fixed-weight
+  # atlases, so declare the real outputs to SCons instead of a nonexistent
+  # NotoSansSC-VF atlas. This prevents font generation on every startup.
+  if font_file.name == "NotoSansSC-VF.ttf":
+    for output_stem in ("NotoSansSC-Medium", "NotoSansSC-Bold"):
+      output_files.append((f"#selfdrive/assets/fonts/{output_stem}.fnt",
+                           f"#selfdrive/assets/fonts/{output_stem}.png"))
+    continue
+  # End BluePilot
+
+  output_files.append((f"#{Path(font_file.path).with_suffix('.fnt')}",
+                       f"#{Path(font_file.path).with_suffix('.png')}"))
 env.Command(
   target=output_files,
   source=[generator, source_files],

@@ -25,6 +25,21 @@ STATE_TO_DISPLAY_TEXT = {
 }
 
 
+# BluePilot: updated exits before publishing its description when updates are
+# disabled. Fall back to the build metadata that manager always publishes so
+# the Software panel still identifies the running build.
+def current_version_description() -> str:
+  updater_description = ui_state.params.get("UpdaterCurrentDescription") or ""
+  if updater_description:
+    return updater_description
+
+  version = ui_state.params.get("Version") or ""
+  branch = ui_state.params.get("GitBranch") or ""
+  commit = (ui_state.params.get("GitCommit") or "")[:7]
+  return " / ".join(part for part in (version, branch, commit) if part)
+# End BluePilot
+
+
 def time_ago(date: datetime.datetime | None) -> str:
   if not date:
     return tr("never")
@@ -56,7 +71,9 @@ class SoftwareLayout(Widget):
     super().__init__()
 
     self._onroad_label = ListItem(lambda: tr("Updates are only downloaded while the car is off."))
-    self._version_item = text_item(lambda: tr("Current Version"), ui_state.params.get("UpdaterCurrentDescription") or "")
+    # BluePilot: keep the current version visible while updates are disabled.
+    self._version_item = text_item(lambda: tr("Current Version"), current_version_description())
+    # End BluePilot
     self._download_btn = button_item(lambda: tr("Download"), lambda: tr("CHECK"), callback=self._on_download_update)
 
     # Install button is initially hidden
@@ -93,7 +110,9 @@ class SoftwareLayout(Widget):
     self._onroad_label.set_visible(ui_state.is_onroad())
 
     # Update current version and release notes
-    current_desc = ui_state.params.get("UpdaterCurrentDescription") or ""
+    # BluePilot: keep the current version visible while updates are disabled.
+    current_desc = current_version_description()
+    # End BluePilot
     current_release_notes = (ui_state.params.get("UpdaterCurrentReleaseNotes") or b"").decode("utf-8", "replace")
     self._version_item.action_item.set_text(current_desc)
     self._version_item.set_description(current_release_notes)

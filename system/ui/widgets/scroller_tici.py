@@ -30,6 +30,11 @@ class Scroller(Widget):
     self._line_separator = LineSeparator() if line_separator else None
     self._pad_end = pad_end
 
+    # BluePilot: track content geometry so expanding/collapsing settings cannot leave
+    # the scroll position outside the new content bounds.
+    self._layout_signature: tuple[tuple[int, float], ...] | None = None
+    # End BluePilot
+
     self.scroll_panel = GuiScrollPanel()
 
     for item in items:
@@ -43,6 +48,14 @@ class Scroller(Widget):
     # TODO: don't draw items that are not in the viewport
     visible_items = [item for item in self._items if item.is_visible]
 
+    # BluePilot: visibility and item heights can change while a settings section or
+    # description is expanded. Clamp immediately to the new bounds instead of letting
+    # the old offset bounce back over several frames.
+    layout_signature = tuple((id(item), float(item.rect.height)) for item in visible_items)
+    layout_changed = layout_signature != self._layout_signature
+    self._layout_signature = layout_signature
+    # End BluePilot
+
     # Add line separator between items
     if self._line_separator is not None:
       l = len(visible_items)
@@ -52,6 +65,14 @@ class Scroller(Widget):
     content_height = sum(item.rect.height for item in visible_items) + self._spacing * (len(visible_items))
     if not self._pad_end:
       content_height -= self._spacing
+
+    # BluePilot: a collapsed section can become shorter than the viewport or current
+    # offset. Resetting through set_offset also stops obsolete scroll inertia.
+    if layout_changed:
+      max_scroll_distance = max(0.0, content_height - self._rect.height)
+      clamped_offset = max(-max_scroll_distance, min(0.0, self.scroll_panel.offset))
+      self.scroll_panel.set_offset(clamped_offset)
+    # End BluePilot
     scroll = self.scroll_panel.update(self._rect, rl.Rectangle(0, 0, self._rect.width, content_height))
 
     rl.begin_scissor_mode(int(self._rect.x), int(self._rect.y),
@@ -65,7 +86,6 @@ class Scroller(Widget):
       # Nicely lay out items vertically
       x = self._rect.x
       y = self._rect.y + cur_height + self._spacing * (idx != 0)
-      cur_height += item.rect.height + self._spacing * (idx != 0)
 
       # Consider scroll
       y += scroll
@@ -75,12 +95,18 @@ class Scroller(Widget):
       item.set_parent_rect(self._rect)
       item.render()
 
+      # BluePilot: rendering a ListItem can expand its description and change its
+      # height. Use that new height for the next row to prevent one-frame overlap.
+      cur_height += item.rect.height + self._spacing * (idx != 0)
+      # End BluePilot
+
     rl.end_scissor_mode()
 
   def show_event(self):
     super().show_event()
     # Reset to top
     self.scroll_panel.set_offset(0)
+    self._layout_signature = None
     for item in self._items:
       item.show_event()
 

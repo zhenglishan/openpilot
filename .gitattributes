@@ -16,6 +16,9 @@ system/hardware/tici/updater filter=lfs diff=lfs merge=lfs -text
 # BluePilot: keep BP-owned binaries as raw git objects (not LFS) so they need no LFS hosting
 bluepilot/** -filter -diff -merge
 selfdrive/assets/fonts/NotoSansSC-VF.ttf -filter -diff -merge
+# BluePilot: generated font atlases must be self-contained in C3 prebuilt
+# branches instead of depending on the upstream GitLab LFS server.
+selfdrive/assets/fonts/*.png -filter -diff -merge
 selfdrive/assets/icons_mici/onroad/bookmark_fill.png -filter -diff -merge
 selfdrive/assets/icons_mici/onroad/driver_monitoring/dm_center.png -filter -diff -merge
 selfdrive/assets/icons_mici/settings/car_icon.png -filter -diff -merge

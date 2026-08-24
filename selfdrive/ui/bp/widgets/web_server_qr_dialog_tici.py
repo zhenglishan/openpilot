@@ -7,6 +7,7 @@ from openpilot.common.swaglog import cloudlog
 from openpilot.common.params import Params
 from openpilot.system.ui.widgets import Widget
 from openpilot.system.ui.lib.application import FontWeight, gui_app
+from openpilot.system.ui.lib.multilang import tr
 from openpilot.system.ui.widgets.label import gui_label
 from openpilot.system.ui.widgets.button import IconButton
 from openpilot.system.ui.widgets.toggle import Toggle
@@ -145,7 +146,7 @@ class WebServerQRDialogTici(Widget):
     y += close_size + 40
 
     # Title
-    title = "Web Routes Server"
+    title = tr("Web Routes Server")
     title_font = gui_app.font(FontWeight.NORMAL)
     left_width = int(content_rect.width * 0.5 - 15)
     
@@ -175,7 +176,7 @@ class WebServerQRDialogTici(Widget):
       
       gui_label(
         rl.Rectangle(qr_x, url_y + 50, qr_size, 40),
-        "Scan to connect",
+        tr("Scan to connect"),
         font_size=35,
         font_weight=FontWeight.MEDIUM,
         color=rl.Color(100, 100, 100, 255)
@@ -190,7 +191,7 @@ class WebServerQRDialogTici(Widget):
     # Toggle label
     gui_label(
       rl.Rectangle(content_rect.x, toggle_y + 90, left_width, 50),
-      "Enable Web Routes Server",
+      tr("Enable Web Routes Server"),
       font_size=45,
       font_weight=FontWeight.MEDIUM,
       color=rl.BLACK
@@ -201,7 +202,7 @@ class WebServerQRDialogTici(Widget):
   def _render_qr_code(self, rect: rl.Rectangle, has_url: bool = True) -> None:
     """Render QR code texture or error message when no IP."""
     if not self._qr_texture:
-      msg = "No WiFi connection" if not has_url else "QR Code Error"
+      msg = tr("No WiFi connection") if not has_url else tr("QR Code Error")
       try:
         rl.draw_rectangle_rounded(rect, 0.1, 20, rl.Color(240, 240, 240, 255))
         error_font = gui_app.font(FontWeight.BOLD)

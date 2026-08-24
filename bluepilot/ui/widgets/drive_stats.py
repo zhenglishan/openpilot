@@ -17,6 +17,7 @@ from openpilot.selfdrive.ui.lib.api_helpers import get_token
 from openpilot.selfdrive.ui.ui_state import ui_state, device
 from openpilot.system.athena.registration import UNREGISTERED_DONGLE_ID
 from openpilot.system.ui.lib.application import gui_app, FontWeight
+from openpilot.system.ui.lib.multilang import tr
 from openpilot.system.ui.lib.text_measure import measure_text_cached
 from openpilot.system.ui.widgets import Widget
 from bluepilot.ui.lib.colors import BPColors
@@ -99,10 +100,10 @@ class DriveStatsWidget(Widget):
 
     # Render both stat sections
     top_rect = rl.Rectangle(rect.x, rect.y, rect.width, section_height)
-    self._render_stat_section(top_rect, "ALL TIME", all_time, is_metric)
+    self._render_stat_section(top_rect, tr("ALL TIME"), all_time, is_metric)
 
     bottom_rect = rl.Rectangle(rect.x, rect.y + section_height + spacing, rect.width, section_height)
-    self._render_stat_section(bottom_rect, "PAST WEEK", week, is_metric)
+    self._render_stat_section(bottom_rect, tr("PAST WEEK"), week, is_metric)
 
   def _render_stat_section(self, rect, title, data, is_metric):
     # Calculate scale based on available height (base height: 275px per section)
@@ -136,7 +137,7 @@ class DriveStatsWidget(Widget):
     distance = data.get("distance", 0)
     distance_str = str(int(distance * CV.MPH_TO_KPH)) if is_metric else str(int(distance))
     hours = int(data.get("minutes", 0) / 60)
-    dist_unit = "KM" if is_metric else "Miles"
+    dist_unit = "KM" if is_metric else tr("Miles")
 
     number_font = gui_app.font(FontWeight.BOLD)
     unit_font = gui_app.font(FontWeight.DISPLAY_REGULAR)
@@ -158,6 +159,6 @@ class DriveStatsWidget(Widget):
       unit_pos = rl.Vector2(center_x - unit_text_size.x / 2, container_rect.y + container_rect.height * 0.6)
       rl.draw_text_ex(unit_font, unit, unit_pos, unit_size, 0, UNIT_COLOR)
 
-    draw_column(0, routes, "Drives")
+    draw_column(0, routes, tr("Drives"))
     draw_column(1, distance_str, dist_unit)
-    draw_column(2, hours, "Hours")
+    draw_column(2, hours, tr("Hours"))

@@ -18,6 +18,7 @@ from openpilot.common.params import Params
 from openpilot.selfdrive.ui.ui_state import ui_state
 from openpilot.system.hardware import PC
 from openpilot.system.ui.lib.application import gui_app, FontWeight, MousePos
+from openpilot.system.ui.lib.multilang import tr, tr_noop
 from openpilot.system.ui.lib.text_measure import measure_text_cached
 from openpilot.system.ui.widgets import Widget
 from bluepilot.ui.lib.colors import BPColors
@@ -32,14 +33,26 @@ ThermalStatus = log.DeviceState.ThermalStatus
 NetworkType = log.DeviceState.NetworkType
 
 NETWORK_TYPES = {
-  NetworkType.none: "Offline",
+  NetworkType.none: tr_noop("Offline"),
   NetworkType.wifi: "WiFi",
   NetworkType.cell2G: "2G",
   NetworkType.cell3G: "3G",
   NetworkType.cell4G: "LTE",
   NetworkType.cell5G: "5G",
-  NetworkType.ethernet: "Ethernet",
+  NetworkType.ethernet: tr_noop("Ethernet"),
 }
+
+LABEL_VEHICLE = tr_noop("VEHICLE")
+LABEL_CONNECT = tr_noop("CONNECT")
+LABEL_SUNNYLINK = "SUNNYLINK"
+STATUS_ONLINE = tr_noop("ONLINE")
+STATUS_OFFLINE = tr_noop("OFFLINE")
+STATUS_DISABLED = tr_noop("DISABLED")
+STATUS_REGISTERING = tr_noop("REGISTERING")
+STATUS_ERROR = tr_noop("ERROR")
+NO_CONNECTION = tr_noop("No Connection")
+WIFI_CONNECTED = tr_noop("WiFi Connected")
+UNKNOWN = tr_noop("Unknown")
 
 # Update intervals (in frames at 20Hz UI rate)
 METRICS_UPDATE_INTERVAL = 20  # ~1 second
@@ -80,9 +93,9 @@ class SidebarBP(Widget):
     self._fan_demand = "0%"
 
     # Status values
-    self._panda_status = ("VEHICLE", "ONLINE", BPColors.GOOD)
-    self._connect_status = ("CONNECT", "OFFLINE", BPColors.WARNING)
-    self._sunnylink_status = ("SUNNYLINK", "DISABLED", BPColors.DISABLED)
+    self._panda_status = (LABEL_VEHICLE, STATUS_ONLINE, BPColors.GOOD)
+    self._connect_status = (LABEL_CONNECT, STATUS_OFFLINE, BPColors.WARNING)
+    self._sunnylink_status = (LABEL_SUNNYLINK, STATUS_DISABLED, BPColors.DISABLED)
 
     # Recording state
     self._recording_audio = False
@@ -230,7 +243,7 @@ class SidebarBP(Widget):
   def _update_network_status(self, device_state):
     """Update network type and strength"""
     try:
-      self._net_type = NETWORK_TYPES.get(device_state.networkType.raw, "Unknown")
+      self._net_type = NETWORK_TYPES.get(device_state.networkType.raw, UNKNOWN)
       strength = device_state.networkStrength
       self._net_strength = max(0, min(5, strength.raw + 1)) if strength > 0 else 0
 
@@ -238,7 +251,7 @@ class SidebarBP(Widget):
       net_type = device_state.networkType
       if net_type == NetworkType.wifi:
         ssid = self._get_wifi_ssid()
-        self._net_carrier_ssid = ssid if ssid else "WiFi Connected"
+        self._net_carrier_ssid = ssid if ssid else WIFI_CONNECTED
       elif net_type in (NetworkType.cell2G, NetworkType.cell3G, NetworkType.cell4G, NetworkType.cell5G):
         # Get carrier name from network info (cellular modem data)
         try:
@@ -253,12 +266,12 @@ class SidebarBP(Widget):
         except Exception:
           self._net_carrier_ssid = self._net_type
       elif net_type == NetworkType.ethernet:
-        self._net_carrier_ssid = "Ethernet"
+        self._net_carrier_ssid = tr_noop("Ethernet")
       else:
-        self._net_carrier_ssid = "No Connection"
+        self._net_carrier_ssid = NO_CONNECTION
     except Exception:
-      self._net_type = "Offline"
-      self._net_carrier_ssid = "No Connection"
+      self._net_type = NETWORK_TYPES[NetworkType.none]
+      self._net_carrier_ssid = NO_CONNECTION
       self._net_strength = 0
 
   def _get_wifi_ssid(self):
@@ -289,23 +302,23 @@ class SidebarBP(Widget):
     try:
       last_ping = device_state.lastAthenaPingTime
       if last_ping == 0:
-        self._connect_status = ("CONNECT", "OFFLINE", BPColors.WARNING)
+        self._connect_status = (LABEL_CONNECT, STATUS_OFFLINE, BPColors.WARNING)
       elif time.monotonic_ns() - last_ping < 80_000_000_000:  # 80 seconds
-        self._connect_status = ("CONNECT", "ONLINE", BPColors.GOOD)
+        self._connect_status = (LABEL_CONNECT, STATUS_ONLINE, BPColors.GOOD)
       else:
-        self._connect_status = ("CONNECT", "ERROR", BPColors.DANGER)
+        self._connect_status = (LABEL_CONNECT, STATUS_ERROR, BPColors.DANGER)
     except Exception:
-      self._connect_status = ("CONNECT", "OFFLINE", BPColors.WARNING)
+      self._connect_status = (LABEL_CONNECT, STATUS_OFFLINE, BPColors.WARNING)
 
   def _update_panda_status(self):
     """Update vehicle/panda connection status"""
     try:
       if ui_state.panda_type == log.PandaState.PandaType.unknown:
-        self._panda_status = ("VEHICLE", "OFFLINE", BPColors.DANGER)
+        self._panda_status = (LABEL_VEHICLE, STATUS_OFFLINE, BPColors.DANGER)
       else:
-        self._panda_status = ("VEHICLE", "ONLINE", BPColors.GOOD)
+        self._panda_status = (LABEL_VEHICLE, STATUS_ONLINE, BPColors.GOOD)
     except Exception:
-      self._panda_status = ("VEHICLE", "OFFLINE", BPColors.DANGER)
+      self._panda_status = (LABEL_VEHICLE, STATUS_OFFLINE, BPColors.DANGER)
 
   def _update_performance_metrics(self, device_state):
     """Update CPU, GPU, Memory metrics at reduced rate"""
@@ -359,22 +372,22 @@ class SidebarBP(Widget):
       last_ping = int(last_ping_str) if last_ping_str else 0
 
       if not sunnylink_enabled:
-        self._sunnylink_status = ("SUNNYLINK", "DISABLED", BPColors.DISABLED)
+        self._sunnylink_status = (LABEL_SUNNYLINK, STATUS_DISABLED, BPColors.DISABLED)
       elif last_ping == 0:
         # Check if dongle ID exists
         dongle_id = self.params.get("SunnylinkDongleId")
         if dongle_id:
-          self._sunnylink_status = ("SUNNYLINK", "OFFLINE", BPColors.WARNING)
+          self._sunnylink_status = (LABEL_SUNNYLINK, STATUS_OFFLINE, BPColors.WARNING)
         else:
-          self._sunnylink_status = ("SUNNYLINK", "REGISTERING", BPColors.PROGRESS)
+          self._sunnylink_status = (LABEL_SUNNYLINK, STATUS_REGISTERING, BPColors.PROGRESS)
       else:
         elapsed = time.monotonic_ns() - last_ping
         if elapsed < 80_000_000_000:
-          self._sunnylink_status = ("SUNNYLINK", "ONLINE", BPColors.GOOD)
+          self._sunnylink_status = (LABEL_SUNNYLINK, STATUS_ONLINE, BPColors.GOOD)
         else:
-          self._sunnylink_status = ("SUNNYLINK", "ERROR", BPColors.DANGER)
+          self._sunnylink_status = (LABEL_SUNNYLINK, STATUS_ERROR, BPColors.DANGER)
     except Exception:
-      self._sunnylink_status = ("SUNNYLINK", "DISABLED", BPColors.DISABLED)
+      self._sunnylink_status = (LABEL_SUNNYLINK, STATUS_DISABLED, BPColors.DISABLED)
 
   def _update_metric_cards(self):
     """Update metric card data"""
@@ -412,21 +425,21 @@ class SidebarBP(Widget):
         mem_color = BPColors.WARNING
     except ValueError:
       pass
-    self._memory_card.set_data(MetricData("MEMORY", "", self._memory_usage, "", mem_color))
+    self._memory_card.set_data(MetricData(tr("MEMORY"), "", self._memory_usage, "", mem_color))
 
     # Vehicle card
     self._vehicle_card.set_data(MetricData(
-      self._panda_status[0], self._panda_status[1], "", "", self._panda_status[2]
+      tr(self._panda_status[0]), tr(self._panda_status[1]), "", "", self._panda_status[2]
     ))
 
     # Connect card
     self._connect_card.set_data(MetricData(
-      self._connect_status[0], self._connect_status[1], "", "", self._connect_status[2]
+      tr(self._connect_status[0]), tr(self._connect_status[1]), "", "", self._connect_status[2]
     ))
 
     # SunnyLink card
     self._sunnylink_card.set_data(MetricData(
-      self._sunnylink_status[0], self._sunnylink_status[1], "", "", self._sunnylink_status[2]
+      tr(self._sunnylink_status[0]), tr(self._sunnylink_status[1]), "", "", self._sunnylink_status[2]
     ))
 
   def _update_layout_rects(self):

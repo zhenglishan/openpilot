@@ -102,6 +102,9 @@ class FontWeight(StrEnum):
   BOLD = "Inter-Bold.fnt"
   SEMI_BOLD = "Inter-SemiBold.fnt"
   UNIFONT = "unifont.fnt"
+  # BluePilot: anti-aliased Simplified Chinese UI font.
+  SIMPLIFIED_CHINESE = "NotoSansSC-VF.fnt"
+  # End BluePilot
   AUDIOWIDE = "Audiowide-Regular.fnt"
 
   # Small UI fonts
@@ -110,8 +113,27 @@ class FontWeight(StrEnum):
   DISPLAY = "Inter-Bold.fnt"
 
 
-def font_fallback(font: rl.Font) -> rl.Font:
+# BluePilot: glyphs absent from Noto Sans SC that use the existing Unifont
+# fallback when they are drawn as ordinary text (emoji has its own renderer).
+SIMPLIFIED_CHINESE_UNIFONT_GLYPHS = frozenset("↳⌫⚙✔✕")
+# End BluePilot
+
+
+def font_fallback(font: rl.Font, text: str = "") -> rl.Font:
   """Fall back to unifont for languages that require it."""
+  # BluePilot: keep an explicitly requested Unifont (notably the language
+  # picker, which must show every script), but render the rest of the
+  # Simplified Chinese UI with Noto Sans SC. Noto Sans SC intentionally does
+  # not contain a few UI symbols, so use Unifont for the uncommon strings that
+  # contain them instead of displaying missing-glyph boxes.
+  if multilang.uses_simplified_chinese_font():
+    unifont = gui_app.font(FontWeight.UNIFONT)
+    if font.texture.id == unifont.texture.id:
+      return font
+    if any(c in SIMPLIFIED_CHINESE_UNIFONT_GLYPHS for c in text):
+      return unifont
+    return gui_app.font(FontWeight.SIMPLIFIED_CHINESE)
+  # End BluePilot
   if multilang.requires_unifont():
     return gui_app.font(FontWeight.UNIFONT)
   return font
@@ -724,7 +746,10 @@ class GuiApplication(GuiApplicationExt):
       rl._orig_draw_text_ex = rl.draw_text_ex
 
     def _draw_text_ex_scaled(font, text, position, font_size, spacing, tint):
-      font = font_fallback(font)
+      # BluePilot: pass the text so the Simplified Chinese fallback can retain
+      # the symbol coverage provided by Unifont.
+      font = font_fallback(font, text)
+      # End BluePilot
       return rl._orig_draw_text_ex(font, text, position, font_size * FONT_SCALE, spacing, tint)
 
     rl.draw_text_ex = _draw_text_ex_scaled

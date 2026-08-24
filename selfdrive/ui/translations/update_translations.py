@@ -11,10 +11,23 @@ POT_FILE = os.path.join(str(TRANSLATIONS_DIR), "app.pot")
 
 def update_translations():
   files = []
+  # BluePilot: include the BP override/settings tree and the BP home/sidebar
+  # implementation. These live outside the upstream extraction roots.
+  extension_roots = (
+    # BluePilot: SunnyPilot's settings and widgets are outside the upstream
+    # roots too; without this, Steering/Cruise/Visuals/Display stay English.
+    os.path.join(UI_DIR, "sunnypilot"),
+    os.path.join(UI_DIR, "bp"),
+    os.path.join(BASEDIR, "bluepilot", "ui"),
+  )
+  # End BluePilot
   for root, _, filenames in chain(os.walk(SYSTEM_UI_DIR),
                                   os.walk(os.path.join(UI_DIR, "widgets")),
                                   os.walk(os.path.join(UI_DIR, "layouts")),
-                                  os.walk(os.path.join(UI_DIR, "onroad"))):
+                                  os.walk(os.path.join(UI_DIR, "onroad")),
+                                  # BluePilot: extract SunnyPilot and BP UI strings.
+                                  *(os.walk(path) for path in extension_roots)):
+                                  # End BluePilot
     for filename in filenames:
       if filename.endswith(".py"):
         files.append(os.path.relpath(os.path.join(root, filename), BASEDIR))

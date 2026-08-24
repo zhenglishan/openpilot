@@ -10,6 +10,7 @@ from collections.abc import Callable
 
 from openpilot.selfdrive.ui.ui_state import ui_state
 from openpilot.system.ui.lib.application import gui_app, FontWeight, MousePos
+from openpilot.system.ui.lib.multilang import tr, tr_noop
 from openpilot.system.ui.lib.text_measure import measure_text_cached
 from openpilot.system.ui.widgets import Widget
 from bluepilot.ui.lib.colors import BPColors
@@ -25,7 +26,7 @@ MODEL_NAME_COLOR = BPColors.ACCENT  # #18b4ff
 # Regex to insert newline before date patterns like "(October 03, 2023)"
 DATE_PATTERN = re.compile(r'\s+(\([A-Za-z]+\s+\d{1,2},\s+\d{4}\))')
 
-DEFAULT_MODEL_NAME = "Default Model"
+DEFAULT_MODEL_NAME = tr_noop("Default Model")
 
 
 class ModelInfoWidget(Widget):
@@ -47,7 +48,7 @@ class ModelInfoWidget(Widget):
         return model_manager.activeBundle.displayName
     except Exception:
       pass
-    return DEFAULT_MODEL_NAME
+    return tr(DEFAULT_MODEL_NAME)
 
   def _handle_mouse_release(self, mouse_pos: MousePos):
     super()._handle_mouse_release(mouse_pos)
@@ -65,7 +66,7 @@ class ModelInfoWidget(Widget):
     # Title (centered)
     title_font = gui_app.font(FontWeight.BOLD)
     title_size = 48
-    title_text = "Driving Model"
+    title_text = tr("Driving Model")
     title_text_size = measure_text_cached(title_font, title_text, title_size)
     title_x = rect.x + (rect.width - title_text_size.x) / 2
     title_pos = rl.Vector2(title_x, rect.y + padding_top)

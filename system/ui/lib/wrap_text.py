@@ -41,7 +41,10 @@ _cache: dict[int, list[str]] = {}
 
 
 def wrap_text(font: rl.Font, text: str, font_size: int, max_width: int, spacing: float = 0) -> list[str]:
+  # BluePilot: select the Chinese base font here; individual measurements
+  # still apply the per-string symbol fallback in measure_text_cached().
   font = font_fallback(font)
+  # End BluePilot
   spacing = round(spacing, 4)
   key = hash((font.texture.id, text, font_size, max_width, spacing))
   if key in _cache:

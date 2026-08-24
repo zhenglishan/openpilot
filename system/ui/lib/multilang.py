@@ -165,6 +165,12 @@ class Multilang:
     """Certain languages require unifont to render their glyphs."""
     return self._language in UNIFONT_LANGUAGES
 
+  # BluePilot: use a high-quality, device-bundled font for Simplified Chinese
+  # instead of scaling the 16 px GNU Unifont atlas across the full-size UI.
+  def uses_simplified_chinese_font(self) -> bool:
+    return self._language == "zh-CHS"
+  # End BluePilot
+
   def setup(self):
     try:
       po_path = TRANSLATIONS_DIR.joinpath(f'app_{self._language}.po')

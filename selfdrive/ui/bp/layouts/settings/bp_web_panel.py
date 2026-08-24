@@ -11,7 +11,7 @@ from openpilot.system.ui.lib.application import FontWeight, MousePos
 from openpilot.system.ui.widgets.label import gui_label
 from openpilot.system.ui.widgets.scroller_tici import Scroller
 from openpilot.system.ui.widgets.list_view import toggle_item
-from openpilot.system.ui.lib.multilang import tr
+from openpilot.system.ui.lib.multilang import tr, tr_noop
 from openpilot.selfdrive.ui.ui_state import ui_state
 
 try:
@@ -28,6 +28,13 @@ GREEN = rl.Color(76, 175, 80, 255)
 GRAY = rl.Color(128, 128, 128, 255)
 LIGHT_GRAY = rl.Color(170, 170, 170, 255)
 INSET_BG = rl.Color(28, 28, 28, 255)
+
+ROUTE_STATE_LOADING = tr_noop("Loading...")
+ROUTE_STATE_NO_WIFI = tr_noop("No WiFi")
+ROUTE_STATE_UNKNOWN = tr_noop("Unknown")
+ROUTE_STATE_NONE = tr_noop("None")
+ROUTE_STATE_ERROR = tr_noop("Error")
+ROUTE_STATE_NOT_RESPONDING = tr_noop("Not responding")
 
 
 class _QRCodeSection(Widget):
@@ -115,7 +122,7 @@ class _QRCodeSection(Widget):
     if not enabled:
       gui_label(
         rl.Rectangle(rect.x + PADDING, rect.y + 20, rect.width - 2 * PADDING, 60),
-        "Enable the server above to access BluePilot Portal",
+        tr("Enable the server above to access BluePilot Portal"),
         font_size=42, color=GRAY, font_weight=FontWeight.NORMAL,
       )
       return
@@ -128,7 +135,7 @@ class _QRCodeSection(Widget):
     rl.draw_circle(int(rect.x + PADDING + 8), int(y + 20), 8, GREEN)
     gui_label(
       rl.Rectangle(rect.x + PADDING + 30, y, rect.width - 2 * PADDING - 30, 40),
-      "Server Enabled", font_size=40, color=LIGHT_GRAY, font_weight=FontWeight.NORMAL,
+      tr("Server Enabled"), font_size=40, color=LIGHT_GRAY, font_weight=FontWeight.NORMAL,
     )
     y += 55
 
@@ -141,7 +148,7 @@ class _QRCodeSection(Widget):
     else:
       ph = rl.Rectangle(qr_x, y, self.QR_SIZE, self.QR_SIZE)
       rl.draw_rectangle_rounded(ph, 0.05, 20, rl.Color(40, 40, 40, 255))
-      msg = "No WiFi Connection" if not url else "QR Code Error"
+      msg = tr("No WiFi Connection") if not url else tr("QR Code Error")
       gui_label(
         rl.Rectangle(qr_x, y + self.QR_SIZE / 2 - 20, self.QR_SIZE, 40),
         msg, font_size=35, color=GRAY, font_weight=FontWeight.NORMAL,
@@ -157,7 +164,7 @@ class _QRCodeSection(Widget):
       y += 52
       gui_label(
         rl.Rectangle(rect.x + PADDING, y, rect.width - 2 * PADDING, 38),
-        "Scan QR code or enter URL in your browser",
+        tr("Scan QR code or enter URL in your browser"),
         font_size=35, color=GRAY, font_weight=FontWeight.NORMAL,
       )
 
@@ -184,17 +191,17 @@ class _HelpSection(Widget):
 
     gui_label(
       rl.Rectangle(x, y, w, 50),
-      "BluePilot Portal Features",
+      tr("BluePilot Portal Features"),
       font_size=46, color=BLUE, font_weight=FontWeight.BOLD,
     )
     y += 65
 
     features = [
-      ("Dashboard:", "Device status, system health, driving statistics"),
-      ("Routes:", "Browse drives, multi-camera video, preserve favorites, export"),
-      ("Settings:", "Manage settings with favorites, search, backup/restore"),
-      ("Parameters:", "View and edit all system parameters with live sync"),
-      ("Logs:", "Live system diagnostics with real-time streaming"),
+      (tr("Dashboard:"), tr("Device status, system health, driving statistics")),
+      (tr("Routes:"), tr("Browse drives, multi-camera video, preserve favorites, export")),
+      (tr("Settings:"), tr("Manage settings with favorites, search, backup/restore")),
+      (tr("Parameters:"), tr("View and edit all system parameters with live sync")),
+      (tr("Logs:"), tr("Live system diagnostics with real-time streaming")),
     ]
     for name, desc in features:
       gui_label(
@@ -207,13 +214,13 @@ class _HelpSection(Widget):
     y += 10
     gui_label(
       rl.Rectangle(x, y, w, 40),
-      "Open on any device browser. Can be added to home screen as an app.",
+      tr("Open on any device browser. Can be added to home screen as an app."),
       font_size=34, color=GRAY, font_weight=FontWeight.NORMAL,
     )
     y += 42
     gui_label(
       rl.Rectangle(x, y, w, 40),
-      "Safety: Full interface locked while driving.",
+      tr("Safety: Full interface locked while driving."),
       font_size=34, color=GRAY, font_weight=FontWeight.NORMAL,
     )
 
@@ -241,7 +248,7 @@ class _StatsSection(Widget):
     if self._loading:
       return
     self._loading = True
-    self._route_count = "Loading..."
+    self._route_count = ROUTE_STATE_LOADING
     self._total_size = "..."
     self._newest_route = "..."
 
@@ -249,7 +256,7 @@ class _StatsSection(Widget):
       try:
         url = self._qr_section.get_server_url()
         if not url:
-          self._route_count = "No WiFi"
+          self._route_count = ROUTE_STATE_NO_WIFI
           self._total_size = "-"
           self._newest_route = "-"
           return
@@ -265,16 +272,16 @@ class _StatsSection(Widget):
               first = routes[0]
               dt = first.get("displayTime", "")
               dd = first.get("displayDate", "").split(" - ")[0] if first.get("displayDate") else ""
-              self._newest_route = f"{dt} {dd}".strip() or "Unknown"
+              self._newest_route = f"{dt} {dd}".strip() or ROUTE_STATE_UNKNOWN
             else:
-              self._newest_route = "None"
+              self._newest_route = ROUTE_STATE_NONE
           else:
-            self._route_count = "Error"
+            self._route_count = ROUTE_STATE_ERROR
             self._total_size = "-"
             self._newest_route = "-"
       except Exception as e:
         cloudlog.debug(f"Stats fetch failed: {e}")
-        self._route_count = "Not responding"
+        self._route_count = ROUTE_STATE_NOT_RESPONDING
         self._total_size = "-"
         self._newest_route = "-"
       finally:
@@ -299,7 +306,7 @@ class _StatsSection(Widget):
 
     gui_label(
       rl.Rectangle(x, y, w, 50),
-      "Routes Overview",
+      tr("Routes Overview"),
       font_size=46, color=BLUE, font_weight=FontWeight.BOLD,
     )
     y += 65
@@ -307,9 +314,9 @@ class _StatsSection(Widget):
     # Stats in a row with inset backgrounds
     col_w = w // 3
     for i, text in enumerate([
-      f"Routes: {self._route_count}",
-      f"Size: {self._total_size}",
-      f"Newest: {self._newest_route}",
+      f"{tr('Routes')}: {tr(self._route_count)}",
+      f"{tr('Size')}: {self._total_size}",
+      f"{tr('Newest')}: {tr(self._newest_route)}",
     ]):
       sr = rl.Rectangle(x + i * col_w + 5, y, col_w - 10, 55)
       rl.draw_rectangle_rounded(sr, 0.3, 10, INSET_BG)
@@ -320,7 +327,7 @@ class _StatsSection(Widget):
     btn_rect = self._get_btn_rect()
     btn_color = rl.Color(35, 35, 35, 255) if self._loading else rl.Color(50, 50, 50, 255)
     rl.draw_rectangle_rounded(btn_rect, 0.5, 10, btn_color)
-    btn_text = "Loading..." if self._loading else "Refresh Stats"
+    btn_text = tr("Loading...") if self._loading else tr("Refresh Stats")
     gui_label(btn_rect, btn_text, font_size=36, color=LIGHT_GRAY, font_weight=FontWeight.MEDIUM)
 
   def _handle_mouse_release(self, mouse_pos: MousePos):

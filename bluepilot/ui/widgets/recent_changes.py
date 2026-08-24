@@ -16,6 +16,7 @@ from openpilot.system.ui.lib.text_measure import measure_text_cached
 from openpilot.system.ui.lib.wrap_text import wrap_text
 from openpilot.system.ui.widgets import Widget, DialogResult
 from openpilot.system.ui.lib.application import MousePos
+from openpilot.system.ui.lib.multilang import tr, tr_noop
 from bluepilot.ui.lib.colors import BPColors
 
 # Layout constants
@@ -38,10 +39,10 @@ CLOSE_FONT_SIZE = 50
 
 # Category definitions: (json_key, display_title, color)
 CATEGORIES = [
-  ("changes", "New Features & Changes", BPColors.CHANGES_GREEN),
-  ("fixes", "Bug Fixes", BPColors.CHANGES_BLUE),
-  ("removals", "Removed Features", BPColors.CHANGES_ORANGE),
-  ("known_issues", "Known Issues", BPColors.CHANGES_RED),
+  ("changes", tr_noop("New Features & Changes"), BPColors.CHANGES_GREEN),
+  ("fixes", tr_noop("Bug Fixes"), BPColors.CHANGES_BLUE),
+  ("removals", tr_noop("Removed Features"), BPColors.CHANGES_ORANGE),
+  ("known_issues", tr_noop("Known Issues"), BPColors.CHANGES_RED),
 ]
 
 _BP_ROOT = os.path.join(os.path.dirname(__file__), '../../..')
@@ -136,7 +137,7 @@ class RecentChangesDialog(Widget):
     for key, title, color in CATEGORIES:
       items = self._version_data.get(key, [])
       if items:
-        self._sections.append((title, color, items))
+        self._sections.append((tr(title), color, items))
 
     # Cached content height (computed on first render with known width)
     self._content_height: float = 0
@@ -203,7 +204,7 @@ class RecentChangesDialog(Widget):
 
     # Title (centered)
     title_font = gui_app.font(FontWeight.SEMI_BOLD)
-    title_text = "Recent Changes"
+    title_text = tr("Recent Changes")
     title_size = measure_text_cached(title_font, title_text, TITLE_FONT_SIZE)
     title_x = rect.x + (rect.width - title_size.x) / 2
     title_y = header_rect.y + (HEADER_HEIGHT - title_size.y) / 2
@@ -251,7 +252,7 @@ class RecentChangesDialog(Widget):
     cur_x = x
 
     # Version badge (blue)
-    version_text = f"Version {self._version}"
+    version_text = f"{tr('Version')} {self._version}"
     version_w = int(measure_text_cached(font, version_text, BADGE_FONT_SIZE).x + BADGE_PAD_X * 2)
     version_rect = rl.Rectangle(cur_x, y, version_w, badge_h)
     roundness = BADGE_RADIUS / (badge_h / 2) if badge_h > 0 else 0.5

@@ -100,7 +100,9 @@ class FloatInputDialogTici(Widget):
     
     # Range hint
     if self.min_value is not None or self.max_value is not None:
-      range_text = f"Range: {self.min_value if self.min_value is not None else '-∞'} to {self.max_value if self.max_value is not None else '∞'}"
+      min_text = self.min_value if self.min_value is not None else '-∞'
+      max_text = self.max_value if self.max_value is not None else '∞'
+      range_text = tr("Range: {} to {}").format(min_text, max_text)
       gui_label(
         rl.Rectangle(content_rect.x, content_rect.y + title_height + 20, content_rect.width, 50),
         range_text,

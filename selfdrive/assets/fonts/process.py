@@ -12,6 +12,10 @@ LANGUAGES_FILE = TRANSLATIONS_DIR / "languages.json"
 GLYPH_PADDING = 6
 EXTRA_CHARS = "–‑✓×°§•X⚙✕◀▶✔⌫⇧␣○●↳çêüñ–‑✓×°§•€£¥"
 UNIFONT_LANGUAGES = {"th", "zh-CHT", "zh-CHS", "ko", "ja"}
+# BluePilot: these known Noto Sans SC gaps are rendered by Unifont or the
+# existing color-emoji renderer, so they do not belong in the CJK atlas.
+SIMPLIFIED_CHINESE_EXTERNAL_GLYPHS = set("↳⌫⚙✔✕🔥")
+# End BluePilot
 
 
 def _languages():
@@ -24,6 +28,10 @@ def _languages():
 def _char_sets():
   base = set(map(chr, range(32, 127))) | set(EXTRA_CHARS)
   unifont = set(base)
+  # BluePilot: keep the Noto Sans SC atlas limited to Simplified Chinese UI
+  # text so it remains practical on the original comma 3 GPU.
+  simplified_chinese = set(base)
+  # End BluePilot
 
   for language, code in _languages().items():
     unifont.update(language)
@@ -34,7 +42,19 @@ def _char_sets():
       continue
     (unifont if code in UNIFONT_LANGUAGES else base).update(chars)
 
-  return tuple(sorted(ord(c) for c in base)), tuple(sorted(ord(c) for c in unifont))
+    # BluePilot: include the language display name and the zh-CHS catalog.
+    if code == "zh-CHS":
+      simplified_chinese.update(language)
+      simplified_chinese.update(c for c in chars if ord(c) >= 32)
+    # End BluePilot
+
+  # BluePilot: keep known external-fallback glyphs out of the generated atlas.
+  simplified_chinese.difference_update(SIMPLIFIED_CHINESE_EXTERNAL_GLYPHS)
+  # End BluePilot
+
+  return (tuple(sorted(ord(c) for c in base)),
+          tuple(sorted(ord(c) for c in unifont)),
+          tuple(sorted(ord(c) for c in simplified_chinese)))
 
 
 def _glyph_metrics(glyphs, rects, glyph_count: int):
@@ -91,6 +111,10 @@ def _process_font(font_path: Path, codepoints: tuple[int, ...]):
 
   font_size = {
     "unifont.otf": 16,  # unifont is only 16x8 or 16x16 pixels per glyph
+    # BluePilot: UI text is normally 40-75 px. Generate CJK glyphs near their
+    # display size to avoid the blocky scaling visible with 16 px Unifont.
+    "NotoSansSC-VF.ttf": 80,
+    # End BluePilot
   }.get(font_path.name, 200)
 
   data = font_path.read_bytes()
@@ -104,6 +128,15 @@ def _process_font(font_path: Path, codepoints: tuple[int, ...]):
   )
   if glyphs == rl.ffi.NULL:
     raise RuntimeError("raylib failed to load font data")
+
+  # BluePilot: make missing translation glyphs visible during the build
+  # instead of silently producing empty boxes on the device.
+  loaded_codepoints = {glyphs[idx].value for idx in range(glyph_count[0])}
+  missing_codepoints = sorted(set(codepoints) - loaded_codepoints)
+  if missing_codepoints:
+    printable = ", ".join(f"U+{cp:04X}" for cp in missing_codepoints)
+    print(f"warning: {font_path.name} is missing {len(missing_codepoints)} glyphs: {printable}")
+  # End BluePilot
 
   rects_ptr = rl.ffi.new("Rectangle **")
   image = rl.gen_image_font_atlas(glyphs, rects_ptr, glyph_count[0], font_size, GLYPH_PADDING, 0)
@@ -122,12 +155,17 @@ def _process_font(font_path: Path, codepoints: tuple[int, ...]):
 
 
 def main():
-  base_cp, unifont_cp = _char_sets()
+  base_cp, unifont_cp, simplified_chinese_cp = _char_sets()
   fonts = sorted(FONT_DIR.glob("*.ttf")) + sorted(FONT_DIR.glob("*.otf"))
   for font in fonts:
     if "emoji" in font.name.lower():
       continue
-    glyphs = unifont_cp if font.stem.lower().startswith("unifont") else base_cp
+    # BluePilot: generate a dedicated compact Simplified Chinese atlas.
+    if font.stem.lower().startswith("notosanssc"):
+      glyphs = simplified_chinese_cp
+    else:
+      glyphs = unifont_cp if font.stem.lower().startswith("unifont") else base_cp
+    # End BluePilot
     _process_font(font, glyphs)
   return 0
 

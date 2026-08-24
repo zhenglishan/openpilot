@@ -6,6 +6,7 @@ Custom network status card with signal bars, carrier/SSID display
 import pyray as rl
 from collections.abc import Callable
 from openpilot.system.ui.lib.application import gui_app, FontWeight, MousePos
+from openpilot.system.ui.lib.multilang import tr, tr_noop
 from openpilot.system.ui.lib.text_measure import measure_text_cached
 from openpilot.system.ui.widgets import Widget
 from bluepilot.ui.lib.colors import BPColors
@@ -23,8 +24,8 @@ class NetworkCard(Widget):
 
   def __init__(self):
     super().__init__()
-    self._net_type = "Offline"
-    self._net_carrier_ssid = "No Connection"
+    self._net_type = tr_noop("Offline")
+    self._net_carrier_ssid = tr_noop("No Connection")
     self._net_strength = 0
     self._is_pressed_state = False
     self._on_click: Callable | None = None
@@ -67,7 +68,7 @@ class NetworkCard(Widget):
 
     # Draw "NETWORK" label (top-left)
     label_pos = rl.Vector2(rect.x + 20, rect.y + 15)
-    rl.draw_text_ex(self._font_label, "NETWORK", label_pos,
+    rl.draw_text_ex(self._font_label, tr("NETWORK"), label_pos,
                     BPConstants.FONT_SIZE_MEDIUM, 0, BPColors.WHITE)
 
     # Draw carrier/SSID (in accent color)
@@ -75,7 +76,7 @@ class NetworkCard(Widget):
     available_width = rect.width - 40  # Padding on both sides
 
     # Truncate carrier name if too long
-    display_name = self._net_carrier_ssid
+    display_name = tr(self._net_carrier_ssid)
     carrier_size = measure_text_cached(self._font_carrier, display_name, BPConstants.FONT_SIZE_LARGE)
     if carrier_size.x > available_width:
       # Simple truncation with ellipsis
@@ -94,7 +95,7 @@ class NetworkCard(Widget):
     self._draw_signal_bars(rect)
 
     # Draw network type text (bottom left)
-    type_text = self._net_type if self._net_type else "Unknown"
+    type_text = tr(self._net_type) if self._net_type else tr("Unknown")
     type_pos = rl.Vector2(rect.x + 20, rect.y + rect.height - 35)
     rl.draw_text_ex(self._font_type, type_text, type_pos,
                     BPConstants.FONT_SIZE_SMALL, 0, BPColors.LIGHT_GRAY)

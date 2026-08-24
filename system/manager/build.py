@@ -47,7 +47,14 @@ def sync_python_env() -> None:
 
   # --frozen: install exactly what uv.lock pins, no re-resolution.
   # --inexact: only add missing packages, never remove extras (won't clobber a dev's env).
-  subprocess.run([uv, "sync", "--frozen", "--inexact"], cwd=BASEDIR, check=True)
+  uv_cmd = [uv, "sync", "--frozen", "--inexact"]
+  # BluePilot: AGNOS launches from /usr/local/venv. Its uv shim runs as root, so allowing
+  # uv to create BASEDIR/.venv leaves a root-owned project environment and the comma user
+  # cannot write the sync marker on the next boot. Target the active AGNOS environment.
+  if AGNOS:
+    uv_cmd.append("--active")
+  # End BluePilot
+  subprocess.run(uv_cmd, cwd=BASEDIR, check=True)
 
   os.makedirs(os.path.dirname(SYNC_MARKER), exist_ok=True)
   with open(SYNC_MARKER, "w") as f:

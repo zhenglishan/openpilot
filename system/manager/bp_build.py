@@ -43,7 +43,10 @@ def sync_python_env() -> None:
     print("uv not found; skipping dependency sync")
     return
 
-  subprocess.run([uv, "sync", "--frozen", "--inexact"], cwd=BASEDIR, check=True)
+  uv_cmd = [uv, "sync", "--frozen", "--inexact"]
+  if AGNOS:
+    uv_cmd.append("--active")
+  subprocess.run(uv_cmd, cwd=BASEDIR, check=True)
 
   os.makedirs(os.path.dirname(SYNC_MARKER), exist_ok=True)
   with open(SYNC_MARKER, "w") as f:

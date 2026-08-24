@@ -15,7 +15,7 @@ class TestSyncPythonEnv:
   whenever the checked-out uv.lock differs from what the venv was last synced against.
   """
 
-  def _run(self, mocker, tmp_path, lock_bytes=b"lock-v1", marker_text=None, uv_found=True):
+  def _run(self, mocker, tmp_path, lock_bytes=b"lock-v1", marker_text=None, uv_found=True, agnos=False):
     lock = tmp_path / "uv.lock"
     if lock_bytes is not None:
       lock.write_bytes(lock_bytes)
@@ -26,6 +26,7 @@ class TestSyncPythonEnv:
 
     calls: list[list[str]] = []
     mocker.patch.multiple(build, UV_LOCK=str(lock), SYNC_MARKER=str(marker))
+    mocker.patch.object(build, "AGNOS", agnos)
     mocker.patch.object(build.shutil, "which", return_value="/usr/bin/uv" if uv_found else None)
     mocker.patch.object(build.os.path, "exists", return_value=uv_found)
     mocker.patch.object(build.subprocess, "run", side_effect=lambda cmd, **kw: calls.append(cmd))
@@ -47,6 +48,10 @@ class TestSyncPythonEnv:
     marker, calls = self._run(mocker, tmp_path, marker_text=hashlib.sha256(b"OLD").hexdigest())
     assert len(calls) == 1
     assert marker.read_text().strip() == DIGEST_V1
+
+  def test_agnos_sync_targets_active_environment(self, mocker, tmp_path):
+    _, calls = self._run(mocker, tmp_path, agnos=True)
+    assert calls == [["/usr/bin/uv", "sync", "--frozen", "--inexact", "--active"]]
 
   def test_missing_lockfile_is_noop(self, mocker, tmp_path):
     _, calls = self._run(mocker, tmp_path, lock_bytes=None)

@@ -78,10 +78,14 @@ function launch {
   tmux capture-pane -pq -S-1000 > /tmp/launch_log
 
   cd "$DIR/system/manager"
-  if [[ ! -s "$DIR/prebuilt" ]] || [[ ! -x "$DIR/selfdrive/pandad/pandad" ]]; then
+  # BluePilot C3: Quickboot creates an intentionally empty marker with
+  # Path.touch(). Check for existence, not non-zero size, so the marker can
+  # actually skip SCons after a successful build.
+  if [[ ! -f "$DIR/prebuilt" ]] || [[ ! -x "$DIR/selfdrive/pandad/pandad" ]]; then
     rm -f "$DIR/prebuilt"
     ./build.py
   fi
+  # End BluePilot
   ./manager.py
 
   while true; do sleep 1; done

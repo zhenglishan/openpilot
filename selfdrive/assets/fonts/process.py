@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
+from io import BytesIO
 import json
 
 import pyray as rl
@@ -15,6 +16,10 @@ UNIFONT_LANGUAGES = {"th", "zh-CHT", "zh-CHS", "ko", "ja"}
 # BluePilot: these known Noto Sans SC gaps are rendered by Unifont or the
 # existing color-emoji renderer, so they do not belong in the CJK atlas.
 SIMPLIFIED_CHINESE_EXTERNAL_GLYPHS = set("↳⌫⚙✔✕🔥")
+SIMPLIFIED_CHINESE_WEIGHTS = {
+  "NotoSansSC-Medium": 500,
+  "NotoSansSC-Bold": 700,
+}
 # End BluePilot
 
 
@@ -106,8 +111,30 @@ def _write_bmfont(path: Path, font_size: int, face: str, atlas_name: str, line_h
   path.write_text("\n".join(lines) + "\n")
 
 
-def _process_font(font_path: Path, codepoints: tuple[int, ...]):
-  print(f"Processing {font_path.name}...")
+def _font_data(font_path: Path, variable_weight: int | None = None) -> bytes:
+  data = font_path.read_bytes()
+  if variable_weight is None:
+    return data
+
+  # Raylib does not expose variable-font axes and loads Noto Sans SC at the
+  # source font's 100-weight default. Materialize a static instance before
+  # passing it to Raylib so Chinese text has a predictable, readable weight.
+  from fontTools.ttLib import TTFont
+  from fontTools.varLib.instancer import instantiateVariableFont
+
+  font = TTFont(BytesIO(data))
+  instantiateVariableFont(font, {"wght": variable_weight}, inplace=True, optimize=True)
+  output = BytesIO()
+  font.save(output)
+  font.close()
+  return output.getvalue()
+
+
+def _process_font(font_path: Path, codepoints: tuple[int, ...], output_stem: str | None = None,
+                  variable_weight: int | None = None):
+  output_stem = output_stem or font_path.stem
+  weight_label = f" at weight {variable_weight}" if variable_weight is not None else ""
+  print(f"Processing {font_path.name}{weight_label} as {output_stem}...")
 
   font_size = {
     "unifont.otf": 16,  # unifont is only 16x8 or 16x16 pixels per glyph
@@ -117,7 +144,7 @@ def _process_font(font_path: Path, codepoints: tuple[int, ...]):
     # End BluePilot
   }.get(font_path.name, 200)
 
-  data = font_path.read_bytes()
+  data = _font_data(font_path, variable_weight)
   file_buf = rl.ffi.new("unsigned char[]", data)
   cp_buffer = rl.ffi.new("int[]", codepoints)
   cp_ptr = rl.ffi.cast("int *", cp_buffer)
@@ -144,14 +171,14 @@ def _process_font(font_path: Path, codepoints: tuple[int, ...]):
     raise RuntimeError("raylib returned an empty atlas")
 
   rects = rects_ptr[0]
-  atlas_name = f"{font_path.stem}.png"
+  atlas_name = f"{output_stem}.png"
   atlas_path = FONT_DIR / atlas_name
   entries, line_height, base = _glyph_metrics(glyphs, rects, glyph_count[0])
 
   if not rl.export_image(image, atlas_path.as_posix()):
     raise RuntimeError("Failed to export atlas image")
 
-  _write_bmfont(FONT_DIR / f"{font_path.stem}.fnt", font_size, font_path.stem, atlas_name, line_height, base, (image.width, image.height), entries)
+  _write_bmfont(FONT_DIR / f"{output_stem}.fnt", font_size, output_stem, atlas_name, line_height, base, (image.width, image.height), entries)
 
 
 def main():
@@ -163,6 +190,9 @@ def main():
     # BluePilot: generate a dedicated compact Simplified Chinese atlas.
     if font.stem.lower().startswith("notosanssc"):
       glyphs = simplified_chinese_cp
+      for output_stem, variable_weight in SIMPLIFIED_CHINESE_WEIGHTS.items():
+        _process_font(font, glyphs, output_stem, variable_weight)
+      continue
     else:
       glyphs = unifont_cp if font.stem.lower().startswith("unifont") else base_cp
     # End BluePilot

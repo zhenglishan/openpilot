@@ -102,8 +102,11 @@ class FontWeight(StrEnum):
   BOLD = "Inter-Bold.fnt"
   SEMI_BOLD = "Inter-SemiBold.fnt"
   UNIFONT = "unifont.fnt"
-  # BluePilot: anti-aliased Simplified Chinese UI font.
-  SIMPLIFIED_CHINESE = "NotoSansSC-VF.fnt"
+  # BluePilot: anti-aliased Simplified Chinese UI fonts. Raylib loads the
+  # variable source font at its 100-weight default, so the atlas generator
+  # creates fixed medium/bold instances instead.
+  SIMPLIFIED_CHINESE_MEDIUM = "NotoSansSC-Medium.fnt"
+  SIMPLIFIED_CHINESE_BOLD = "NotoSansSC-Bold.fnt"
   # End BluePilot
   AUDIOWIDE = "Audiowide-Regular.fnt"
 
@@ -132,7 +135,17 @@ def font_fallback(font: rl.Font, text: str = "") -> rl.Font:
       return font
     if any(c in SIMPLIFIED_CHINESE_UNIFONT_GLYPHS for c in text):
       return unifont
-    return gui_app.font(FontWeight.SIMPLIFIED_CHINESE)
+
+    chinese_medium = gui_app.font(FontWeight.SIMPLIFIED_CHINESE_MEDIUM)
+    chinese_bold = gui_app.font(FontWeight.SIMPLIFIED_CHINESE_BOLD)
+    if font.texture.id in (chinese_medium.texture.id, chinese_bold.texture.id):
+      return font
+
+    bold_texture_ids = {
+      gui_app.font(FontWeight.BOLD).texture.id,
+      gui_app.font(FontWeight.SEMI_BOLD).texture.id,
+    }
+    return chinese_bold if font.texture.id in bold_texture_ids else chinese_medium
   # End BluePilot
   if multilang.requires_unifont():
     return gui_app.font(FontWeight.UNIFONT)

@@ -3089,3 +3089,651 @@ msgstr "✓ 已订阅"
 msgid "🔥 Firehose Mode 🔥"
 msgstr "🔥 Firehose 模式 🔥"
 
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "openpilot Unavailable"
+msgstr "openpilot 暂不可用"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "openpilot will disengage"
+msgstr "openpilot 即将退出"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Always keep hands on wheel and eyes on road"
+msgstr "请始终手握方向盘并注意路况"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Enable Adaptive Cruise to Engage"
+msgstr "开启自适应巡航后即可启用"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Enable Main Switch to Engage"
+msgstr "开启巡航主开关后即可启用"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "WARNING: This branch is not tested"
+msgstr "警告：此分支尚未经过测试"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Be ready to take over at any time"
+msgstr "请随时准备接管"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Dashcam mode"
+msgstr "行车记录模式"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Dashcam mode for unsupported car"
+msgstr "车辆暂不受支持，仅运行行车记录模式"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Dashcam Mode"
+msgstr "行车记录模式"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Security Key Not Available"
+msgstr "安全密钥不可用"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Car Unrecognized"
+msgstr "无法识别车辆"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "System Initializing"
+msgstr "系统正在初始化"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Recording Audio Feedback"
+msgstr "正在录制语音反馈"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Out of Storage"
+msgstr "存储空间不足"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Posenet Speed Invalid"
+msgstr "Posenet 车速无效"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Process Not Running"
+msgstr "进程未运行"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Communication Issue Between Processes"
+msgstr "进程间通信异常"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Camera Malfunction"
+msgstr "摄像头故障"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Calibration Invalid"
+msgstr "设备校准无效"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Steering misalignment detected"
+msgstr "检测到转向不正"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Steer ratio mismatch"
+msgstr "转向比不匹配"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Abnormal tire stiffness"
+msgstr "轮胎刚度异常"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "paramsd Temporary Error"
+msgstr "paramsd 临时错误"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "System Overheated"
+msgstr "系统温度过高"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Low Memory"
+msgstr "可用内存不足"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "High CPU Usage"
+msgstr "CPU 使用率过高"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Driving Model Lagging"
+msgstr "驾驶模型运行延迟"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Joystick Mode"
+msgstr "操纵测试模式"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Invalid LKAS setting"
+msgstr "LKAS 设置无效"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Toggle stock LKAS on or off to engage"
+msgstr "切换原车 LKAS 开关后即可启用"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Switch to Traffic-Aware Cruise Control to engage"
+msgstr "切换到交通感知巡航控制后即可启用"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Enable your car's LKAS to engage"
+msgstr "开启车辆 LKAS 后即可启用"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Disable your car's stock LKAS to engage"
+msgstr "关闭车辆原厂 LKAS 后即可启用"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Ensure road ahead is clear"
+msgstr "请确保前方道路安全"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "BRAKE!"
+msgstr "刹车！"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Emergency Braking: Risk of Collision"
+msgstr "紧急制动：存在碰撞风险"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "AEB: Risk of Collision"
+msgstr "AEB：存在碰撞风险"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Stock AEB: Risk of Collision"
+msgstr "原车 AEB：存在碰撞风险"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Stock LKAS: Lane Departure Detected"
+msgstr "原车 LKAS：检测到车道偏离"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Risk of Collision"
+msgstr "存在碰撞风险"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Lane Departure Detected"
+msgstr "检测到车道偏离"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Steering Assist Temporarily Unavailable"
+msgstr "转向辅助暂时不可用"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Pay Attention"
+msgstr "请注意路况"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Driver Distracted"
+msgstr "驾驶员注意力分散"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "DISENGAGE IMMEDIATELY"
+msgstr "请立即退出辅助驾驶"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Touch Steering Wheel: No Face Detected"
+msgstr "请触摸方向盘：未检测到人脸"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Touch Steering Wheel"
+msgstr "请触摸方向盘"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Driver Unresponsive"
+msgstr "驾驶员无响应"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "TAKE CONTROL"
+msgstr "请接管控制"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Take Control"
+msgstr "请接管控制"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "take control"
+msgstr "请接管控制"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Resume Driving Manually"
+msgstr "请恢复人工驾驶"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Press Resume to Exit Standstill"
+msgstr "按 RES 键退出静止状态"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Steer Left to Start Lane Change Once Safe"
+msgstr "确认安全后向左转动方向盘开始变道"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Steer Right to Start Lane Change Once Safe"
+msgstr "确认安全后向右转动方向盘开始变道"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Car Detected in Blindspot"
+msgstr "盲区内检测到车辆"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Changing Lanes"
+msgstr "正在变道"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Turn Exceeds Steering Limit"
+msgstr "转弯超出转向能力"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "turn exceeds limit"
+msgstr "转弯超出转向能力"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Fan Malfunction"
+msgstr "风扇故障"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Likely Hardware Issue"
+msgstr "可能存在硬件故障"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Camera Malfunction: Reboot Your Device"
+msgstr "摄像头故障：请重启设备"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Camera Frame Rate Low"
+msgstr "摄像头帧率过低"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Reboot your Device"
+msgstr "请重启设备"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Camera Frame Rate Low: Reboot Your Device"
+msgstr "摄像头帧率过低：请重启设备"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "locationd Temporary Error"
+msgstr "locationd 临时错误"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "locationd Permanent Error"
+msgstr "locationd 持续错误"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "paramsd Permanent Error"
+msgstr "paramsd 持续错误"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Cancel Pressed"
+msgstr "已按下取消键"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Press Resume to Exit Brake Hold"
+msgstr "按 RES 键退出制动保持"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Parking Brake Engaged"
+msgstr "驻车制动已启用"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Pedal Pressed"
+msgstr "检测到踩踏板"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Steering Pressed"
+msgstr "检测到人工转向"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Release Brake to Engage"
+msgstr "松开制动踏板后即可启用"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Press Set to Engage"
+msgstr "按 SET 键启用"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Adaptive Cruise Disabled"
+msgstr "自适应巡航已关闭"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Steering Temporarily Unavailable"
+msgstr "转向暂时不可用"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Vehicle Steering Time Limit"
+msgstr "车辆转向持续时间已达上限"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Sensor Data Invalid"
+msgstr "传感器数据无效"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Possible Hardware Issue"
+msgstr "可能存在硬件故障"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Distraction Level Too High"
+msgstr "驾驶员分心程度过高"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Excessive Actuation"
+msgstr "控制输出过大"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Gear not D"
+msgstr "挡位不在 D 挡"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Calibration Invalid: Remount Device & Recalibrate"
+msgstr "设备校准无效：请重新安装设备并校准"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Calibration in Progress"
+msgstr "正在进行设备校准"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Remount Detected: Recalibrating"
+msgstr "检测到设备重新安装：正在重新校准"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Door Open"
+msgstr "车门未关"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Seatbelt Unlatched"
+msgstr "安全带未系"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Electronic Stability Control Disabled"
+msgstr "电子稳定控制已关闭"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Low Battery"
+msgstr "电量过低"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Low Communication Rate Between Processes"
+msgstr "进程间通信频率过低"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Selfdrive Process Lagging: Reboot Your Device"
+msgstr "Selfdrive 进程运行延迟：请重启设备"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Radar Error: Restart the Car"
+msgstr "雷达故障：请重启车辆"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Radar Temporarily Unavailable"
+msgstr "雷达暂时不可用"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Device Fell Off Mount"
+msgstr "设备已从支架脱落"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Low Memory: Reboot Your Device"
+msgstr "可用内存不足：请重启设备"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Cruise Fault: Restart the Car"
+msgstr "巡航系统故障：请重启车辆"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Cruise Fault: Restart the car to engage"
+msgstr "巡航系统故障：重启车辆后方可启用"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Electronic Stability Control Active"
+msgstr "电子稳定控制正在介入"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Controls Mismatch"
+msgstr "控制状态不匹配"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Controls Mismatch: Lateral"
+msgstr "控制状态不匹配：横向控制"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "USB Error: Reboot Your Device"
+msgstr "USB 错误：请重启设备"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Unknown Vehicle Variant"
+msgstr "未知车辆配置"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "CAN Bus Disconnected"
+msgstr "CAN 总线已断开"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "CAN Bus Disconnected: Likely Faulty Cable"
+msgstr "CAN 总线已断开：线束可能故障"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "CAN Bus Disconnected: Check Connections"
+msgstr "CAN 总线已断开：请检查连接"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "LKAS Fault: Restart the Car"
+msgstr "LKAS 故障：请重启车辆"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "LKAS Fault: Restart the car to engage"
+msgstr "LKAS 故障：重启车辆后方可启用"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Reverse\nGear"
+msgstr "倒车挡"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Reverse Gear"
+msgstr "倒车挡"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Cruise Is Off"
+msgstr "巡航已关闭"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Harness Relay Malfunction"
+msgstr "线束继电器故障"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Check Hardware"
+msgstr "请检查硬件"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "openpilot Canceled"
+msgstr "openpilot 已取消"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Speed too low"
+msgstr "车速过低"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Speed Too High"
+msgstr "车速过高"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Model uncertain at this speed"
+msgstr "模型在当前车速下置信度不足"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Slow down to engage"
+msgstr "降低车速后即可启用"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Vehicle Sensors Invalid"
+msgstr "车辆传感器数据无效"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Vehicle Sensors Calibrating"
+msgstr "正在校准车辆传感器"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Drive to Calibrate"
+msgstr "请行驶以完成校准"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Bookmark Saved"
+msgstr "书签已保存"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Calibrating"
+msgstr "正在校准"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Recalibrating"
+msgstr "正在重新校准"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Press Resume"
+msgstr "按 RES 键"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Steer Left"
+msgstr "向左转动方向盘"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Steer Right"
+msgstr "向右转动方向盘"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Confirm Lane Change"
+msgstr "确认变道"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Car in Blindspot"
+msgstr "盲区内有车辆"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Reverse"
+msgstr "倒车"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Automatic Lane Centering is OFF"
+msgstr "自动车道居中已关闭"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Manual Steering Required"
+msgstr "需要人工转向"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Smart/Adaptive Cruise Control: OFF"
+msgstr "智能/自适应巡航已关闭"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Manual Speed Control Required"
+msgstr "需要人工控制车速"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Brake Hold Active"
+msgstr "制动保持已启用"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Experimental Mode Switched"
+msgstr "实验模式已切换"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Turning Left"
+msgstr "正在左转"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Turning Right"
+msgstr "正在右转"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Auto adjusting to speed limit"
+msgstr "正在自动调整至限速"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Set speed changed"
+msgstr "设定车速已更改"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Auto adjusting to last speed limit"
+msgstr "正在自动恢复上一限速"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Press + to confirm speed limit"
+msgstr "按 + 键确认限速"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Press - to confirm speed limit"
+msgstr "按 - 键确认限速"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Drive above {} to engage"
+msgstr "车速高于 {} 后即可启用"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Steer Assist Unavailable Below {}"
+msgstr "车速低于 {} 时转向辅助不可用"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "{}: {}%"
+msgstr "{}：{}%"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Drive Above {}"
+msgstr "请以高于 {} 的速度行驶"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "{} seconds remaining. Press again to save early."
+msgstr "还剩 {} 秒，再按一次可提前保存。"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "{}% full"
+msgstr "存储空间已使用 {}%"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Speed Error: {} m/s"
+msgstr "车速误差：{} m/s"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Remount Device (Pitch: {}°, Yaw: {}°)"
+msgstr "请重新安装设备（俯仰：{}°，偏航：{}°）"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Angle offset too high (Offset: {}°)"
+msgstr "转向角偏移过大（偏移：{}°）"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Steering rack geometry may be off (Ratio: {})"
+msgstr "转向机构参数可能异常（转向比：{}）"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Check tires, pressure, or alignment (Factor: {})"
+msgstr "请检查轮胎、胎压或四轮定位（系数：{}）"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "{} °C"
+msgstr "{} °C"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "{}% used"
+msgstr "已使用 {}%"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "{}% frames dropped"
+msgstr "丢帧率 {}%"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Gas: {}%, Steer: {}%"
+msgstr "纵向：{}%，横向：{}%"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Driving Personality: {}"
+msgstr "驾驶风格：{}"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Adjusting to {} speed limit"
+msgstr "正在调整至限速 {}"
+
+#: selfdrive\ui\bp\onroad\alert_translations.py
+msgid "Speed Limit Assist: set to {} to engage"
+msgstr "限速辅助：将设定车速调至 {} 后可启用"
+

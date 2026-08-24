@@ -3,6 +3,7 @@ import pyray as rl
 from cereal import log
 
 from openpilot.selfdrive.ui.onroad.alert_renderer import AlertRenderer, ALERT_PADDING
+from openpilot.selfdrive.ui.bp.onroad.alert_translations import translate_alert_text
 from openpilot.system.ui.lib.application import gui_app
 from openpilot.system.ui.lib.text_measure import measure_text_cached
 from openpilot.selfdrive.ui.bp.lib.ui_debug_logger import bp_ui_log
@@ -27,6 +28,13 @@ PILL_BACKGROUND_COLOR = rl.Color(45, 45, 45, 255)
 
 class AlertRendererBP(AlertRenderer):
   """BluePilot AlertRenderer with pill-shaped notifications below speed display."""
+
+  def get_alert(self, sm):
+    alert = super().get_alert(sm)
+    if alert is not None:
+      alert.text1 = translate_alert_text(alert.text1)
+      alert.text2 = translate_alert_text(alert.text2)
+    return alert
 
   def _render(self, rect: rl.Rectangle):
     from openpilot.selfdrive.ui.ui_state import ui_state

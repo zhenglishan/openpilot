@@ -6,6 +6,10 @@ Import('env', 'arch', 'common')
 # build the fonts
 generator = File("#selfdrive/assets/fonts/process.py")
 source_files = Glob("#selfdrive/assets/fonts/*.ttf") + Glob("#selfdrive/assets/fonts/*.otf")
+# BluePilot: the Simplified Chinese atlas is generated from the PO catalog, so
+# translation changes must invalidate the font targets as well.
+translation_files = Glob("#selfdrive/ui/translations/*.po")
+# End BluePilot
 output_files = []
 for font_file in source_files:
   if "NotoColor" in font_file.name:
@@ -25,7 +29,7 @@ for font_file in source_files:
                        f"#{Path(font_file.path).with_suffix('.png')}"))
 env.Command(
   target=output_files,
-  source=[generator, source_files],
+  source=[generator, source_files, translation_files],
   action=f"python3 {generator}",
 )
 

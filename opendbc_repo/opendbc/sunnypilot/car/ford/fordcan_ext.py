@@ -16,6 +16,7 @@ functions instead of the stock versions.
 
 from opendbc.car import structs
 from opendbc.car.ford.fordcan import CanBus, calculate_lat_ctl2_checksum
+from opendbc.sunnypilot.car.ford.values_ext import clip_ford_path_angle_wire
 
 HUDControl = structs.CarControl.HUDControl
 
@@ -76,6 +77,9 @@ def create_lat_ctl_msg(packer, CAN: CanBus, lat_active: bool, ramp_type: int, pr
 
   Frequency is 20Hz.
   """
+  # BluePilot: fail safe at the last Python boundary. Values below the unsigned DBC signal's
+  # physical minimum otherwise wrap to the opposite positive extreme in CANPacker.
+  path_angle = clip_ford_path_angle_wire(path_angle)
   values = {
     "LatCtlRng_L_Max": 0,                       # Unknown [0|126] meter
     "HandsOffCnfm_B_Rq": 0,                     # Unknown: 0=Inactive, 1=Active [0|1]
@@ -105,6 +109,8 @@ def create_lat_ctl2_msg(packer, CAN: CanBus, mode: int, ramp_type: int, precisio
 
   Frequency is 20Hz.
   """
+  # Keep CAN-FD on the same fail-safe wire boundary as classic CAN.
+  path_angle = clip_ford_path_angle_wire(path_angle)
   values = {
     "LatCtl_D2_Rq": mode,                       # Mode: 0=None, 1=PathFollowingLimitedMode, 2=PathFollowingExtendedMode,
                                                  #       3=SafeRampOut, 4-7=NotUsed [0|7]

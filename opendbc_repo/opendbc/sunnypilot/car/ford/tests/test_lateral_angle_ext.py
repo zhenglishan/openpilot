@@ -18,13 +18,22 @@ See the LICENSE.md file in the root directory for more details.
 import math
 import unittest
 from dataclasses import dataclass
+from types import SimpleNamespace
 from unittest import mock
 
 from opendbc.car import structs
 from opendbc.car.ford.values import CAR, CarControllerParams
 from opendbc.car.interfaces import scale_tire_stiffness
-from opendbc.sunnypilot.car.ford import lateral_curv_ext
-from opendbc.sunnypilot.car.ford.values_ext import FordSafetyFlagsSP
+from opendbc.sunnypilot.car.ford import fordcan_ext, lateral_curv_ext
+from opendbc.sunnypilot.car.ford.values_ext import (
+  FORD_DBC_PATH_ANGLE_MAX,
+  FORD_DBC_PATH_ANGLE_MIN,
+  FORD_INTERNAL_PATH_ANGLE_MAX,
+  FORD_INTERNAL_PATH_ANGLE_MIN,
+  FordSafetyFlagsSP,
+  clip_ford_path_angle_internal,
+  clip_ford_path_angle_wire,
+)
 from opendbc.sunnypilot.car.ford.lateral_curv_ext import LateralCurvExt
 from opendbc.sunnypilot.car.ford.lateral_angle_ext import LateralAngleExt
 
@@ -87,6 +96,15 @@ class _FakeParams:
 
   def get(self, key, return_default=False):
     return self.values.get(key)
+
+
+class _CapturePacker:
+  def __init__(self):
+    self.calls = []
+
+  def make_can_msg(self, name, bus, values):
+    self.calls.append((name, bus, values.copy()))
+    return 0, bytes(8), bus
 
 
 @dataclass
@@ -248,6 +266,46 @@ class TestAngleParams(unittest.TestCase):
       with self.subTest(raw_value=raw_value):
         self.ext.update_angle_params(_FakeParams({"FordHighSpeedDampening_ang": raw_value}))
         self.assertAlmostEqual(self.ext.user_dampening_factor, expected)
+
+
+class TestPathAngleBounds(unittest.TestCase):
+  """The internal sign convention is negated before packing, so its limits must be mirrored."""
+
+  def test_internal_bounds_mirror_wire_bounds(self):
+    self.assertEqual(FORD_INTERNAL_PATH_ANGLE_MIN, -FORD_DBC_PATH_ANGLE_MAX)
+    self.assertEqual(FORD_INTERNAL_PATH_ANGLE_MAX, -FORD_DBC_PATH_ANGLE_MIN)
+
+  def test_internal_clip_maps_exactly_into_wire_range(self):
+    cases = (
+      (-1.0, FORD_DBC_PATH_ANGLE_MAX),
+      (FORD_INTERNAL_PATH_ANGLE_MIN, FORD_DBC_PATH_ANGLE_MAX),
+      (FORD_INTERNAL_PATH_ANGLE_MAX, FORD_DBC_PATH_ANGLE_MIN),
+      (1.0, FORD_DBC_PATH_ANGLE_MIN),
+    )
+    for internal, expected_wire in cases:
+      with self.subTest(internal=internal):
+        wire = -clip_ford_path_angle_internal(internal)
+        self.assertAlmostEqual(wire, expected_wire)
+        self.assertGreaterEqual(wire, FORD_DBC_PATH_ANGLE_MIN)
+        self.assertLessEqual(wire, FORD_DBC_PATH_ANGLE_MAX)
+
+  def test_wire_guard_prevents_unsigned_dbc_wrap(self):
+    self.assertEqual(clip_ford_path_angle_wire(-1.0), FORD_DBC_PATH_ANGLE_MIN)
+    self.assertEqual(clip_ford_path_angle_wire(1.0), FORD_DBC_PATH_ANGLE_MAX)
+
+  def test_classic_can_builder_clips_wire_value(self):
+    packer = _CapturePacker()
+    fordcan_ext.create_lat_ctl_msg(
+      packer, SimpleNamespace(main=0), True, 2, 1, 0.0, -1.0, 0.0, 0.0,
+    )
+    self.assertEqual(packer.calls[-1][2]["LatCtlPath_An_Actl"], FORD_DBC_PATH_ANGLE_MIN)
+
+  def test_canfd_builder_clips_wire_value(self):
+    packer = _CapturePacker()
+    fordcan_ext.create_lat_ctl2_msg(
+      packer, SimpleNamespace(main=0), 1, 2, 1, 0.0, 1.0, 0.0, 0.0, 0,
+    )
+    self.assertEqual(packer.calls[-1][2]["LatCtlPath_An_Actl"], FORD_DBC_PATH_ANGLE_MAX)
 
 
 class TestInitializeFord(unittest.TestCase):

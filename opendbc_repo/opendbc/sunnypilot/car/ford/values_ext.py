@@ -15,6 +15,25 @@ from opendbc.car.lateral import AngleSteeringLimits
 ButtonType = structs.CarState.ButtonEvent.Type
 Button = namedtuple('Button', ['event_type', 'can_addr', 'can_msg', 'values'])
 
+
+# BluePilot: Ford path-angle limits use opposite signs internally and on the CAN wire.
+# LatCtlPath_An_Actl is an unsigned 11-bit DBC signal with a -0.5 rad offset, so its
+# representable wire range is intentionally asymmetric. CarController negates the internal
+# command before packing; mirror the bounds here so that negation can never cross the DBC range.
+FORD_DBC_PATH_ANGLE_MIN = -0.5
+FORD_DBC_PATH_ANGLE_MAX = 0.5235
+FORD_INTERNAL_PATH_ANGLE_MIN = -FORD_DBC_PATH_ANGLE_MAX
+FORD_INTERNAL_PATH_ANGLE_MAX = -FORD_DBC_PATH_ANGLE_MIN
+
+
+def clip_ford_path_angle_internal(path_angle: float) -> float:
+  return min(FORD_INTERNAL_PATH_ANGLE_MAX, max(FORD_INTERNAL_PATH_ANGLE_MIN, float(path_angle)))
+
+
+def clip_ford_path_angle_wire(path_angle: float) -> float:
+  """Last-resort guard against unsigned DBC wraparound at the CAN packing boundary."""
+  return min(FORD_DBC_PATH_ANGLE_MAX, max(FORD_DBC_PATH_ANGLE_MIN, float(path_angle)))
+
 # Ford cruise control buttons are in the Steering_Data_FD1 message (CAN ID 131)
 # These signals are 1-bit flags: 1 = pressed, 0 = not pressed
 #

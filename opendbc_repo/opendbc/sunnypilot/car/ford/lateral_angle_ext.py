@@ -126,6 +126,21 @@ _REVERSAL_CONFIRM_S = 0.10
 _REVERSAL_DESIRED_MIN = 0.0003
 _REVERSAL_EXIT_CURVATURE = 0.75 * CarControllerParams.CURVATURE_ERROR
 
+# Low-speed sharp-curve hold. Angle mode maps kappa to path_angle with kappa * v_ego * gain.
+# That fixed-time-lookahead mapping makes the only active steering signal shrink whenever the
+# car slows, even if the requested curvature still substantially leads the measured curvature.
+# In a real 15 km/h turn this unwound path_angle 0.406 -> 0.314 rad while requested kappa stayed
+# 0.061-0.073 1/m and measured kappa fell away 0.051 -> 0.040 1/m. Preserve the already-earned
+# path_angle only while the car is demonstrably still under-tracking the same sharp curve; never
+# increase it here. The ordinary mapping resumes as soon as the model exits, the car catches the
+# request, speed rises out of the low-speed region, or the driver/lane-change state takes over.
+_LOW_SPEED_CURVE_HOLD_MAX_SPEED = 9.0
+_LOW_SPEED_CURVE_HOLD_REQUEST_MIN = 0.030
+_LOW_SPEED_CURVE_HOLD_MEASURED_MIN = 0.020
+_LOW_SPEED_CURVE_HOLD_GAP_MIN = 4.0 * CarControllerParams.CURVATURE_ERROR
+_LOW_SPEED_CURVE_HOLD_PATH_ANGLE_MIN = 0.10
+_LOW_SPEED_CURVE_HOLD_MAX_ADDITION = 0.10  # rad above the instantaneous-speed target
+
 
 def pscm_d_ref_m(v_ego_ms: float) -> float:
   v = max(float(v_ego_ms), 0.0)
@@ -191,6 +206,7 @@ class LateralAngleExt:
     self.reversal_recent_lane_change_s = 0.0
     self.reversal_confirm_s = 0.0
     self.angle_reversal_unwind_active = False
+    self.bp_low_speed_curve_hold_active = False
 
   def update_angle_params(self, params):
     """Sets per-platform gain defaults and reads user angle-tuning params."""
@@ -271,6 +287,7 @@ class LateralAngleExt:
       self.reversal_recent_lane_change_s = 0.0
       self.reversal_confirm_s = 0.0
       self.angle_reversal_unwind_active = False
+      self.bp_low_speed_curve_hold_active = False
       self.precision_type = 1
       return LateralResult(
         apply_curvature=0.0,
@@ -316,6 +333,7 @@ class LateralAngleExt:
       self.reversal_recent_lane_change_s = 0.0
       self.reversal_confirm_s = 0.0
       self.angle_reversal_unwind_active = False
+      self.bp_low_speed_curve_hold_active = False
       self.precision_type = 1
       return LateralResult(
         apply_curvature=0.0,
@@ -365,6 +383,7 @@ class LateralAngleExt:
       self.reversal_recent_lane_change_s = 0.0
       self.reversal_confirm_s = 0.0
       self.angle_reversal_unwind_active = False
+      self.bp_low_speed_curve_hold_active = False
       self.precision_type = 1
       if self.stall_blip_frames_left <= 0:
         self.stall_blip_cooldown_s = _STALL_COOLDOWN_S
@@ -540,6 +559,33 @@ class LateralAngleExt:
     self.curvature_factor = interp(abs(kappa_cmd), [0.0007, 0.001], [self.low_gain_calc, self.high_gain_calc])
 
     path_angle_calc = 0.0 if self.angle_reversal_unwind_active else kappa_cmd * v_ego * self.curvature_factor
+
+    # At low speed, path_angle is the sole steering actuator (c0/c2/c3 are zero), so multiplying
+    # by instantaneous speed can make a well-established sharp turn unwind merely because the car
+    # is slowing. Hold -- never increase -- the previous safe command while the blended request is
+    # still in the same direction and leads measured curvature by a clear margin. This is not an
+    # angle-limit bypass: DBC clipping, PSCM handling, the soft ROC, and panda checks below remain
+    # unchanged. It also stays completely separate from the lane-change reversal neutral command.
+    _tracking_gap = abs(kappa_cmd) - abs(current_curvature)
+    self.bp_low_speed_curve_hold_active = bool(
+      not self.angle_reversal_unwind_active
+      and not self.lane_change
+      and not CS.out.steeringPressed
+      and v_ego < _LOW_SPEED_CURVE_HOLD_MAX_SPEED
+      and abs(kappa_cmd) >= _LOW_SPEED_CURVE_HOLD_REQUEST_MIN
+      and abs(current_curvature) >= _LOW_SPEED_CURVE_HOLD_MEASURED_MIN
+      and _tracking_gap >= _LOW_SPEED_CURVE_HOLD_GAP_MIN
+      and kappa_cmd * current_curvature > 0.0
+      and path_angle_calc * self.path_angle_last > 0.0
+      and abs(self.path_angle_last) >= _LOW_SPEED_CURVE_HOLD_PATH_ANGLE_MIN
+      and abs(path_angle_calc) < abs(self.path_angle_last)
+    )
+    if self.bp_low_speed_curve_hold_active:
+      # Bound the decoupling authority: retain at most 0.10 rad above the ordinary instantaneous-
+      # speed result. This fully covers the diagnosed 0.406 -> 0.310 rad collapse, but prevents a
+      # very-low-speed target from inheriting an arbitrarily large angle from earlier in the turn.
+      held_magnitude = min(abs(self.path_angle_last), abs(path_angle_calc) + _LOW_SPEED_CURVE_HOLD_MAX_ADDITION)
+      path_angle_calc = float(np.copysign(held_magnitude, path_angle_calc))
     path_angle = path_angle_calc
 
 

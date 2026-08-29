@@ -182,6 +182,7 @@ class ControllerStateBP:
   humanTurnLateralPaused: bool = False  # angle mode: lateral forced inactive (mode 0) during a manual turn
   stallBlipActive: bool = False  # angle mode: brief mode-0 pulse resetting PSCM authority after a post-override stall
   reversalUnwindActive: bool = False  # angle mode: old-sign path angle is returning to neutral after a lane change
+  lowSpeedCurveHoldActive: bool = False  # angle mode: deceleration is prevented from prematurely unwinding a sharp curve
 
   # BluePilot: full BluePilot-menu settings snapshot -- see custom.capnp ControllerStateBP for
   # field-by-field param-key mapping and the field-retirement convention.

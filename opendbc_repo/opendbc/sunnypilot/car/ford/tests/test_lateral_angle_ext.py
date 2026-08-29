@@ -344,6 +344,99 @@ class TestLaneChangeReversalUnwind(unittest.TestCase):
     self.assertFalse(self.ext.angle_reversal_unwind_active)
 
 
+class TestLowSpeedSharpCurveHold(unittest.TestCase):
+  """Low-speed deceleration must not unwind angle mode while the car still under-tracks a sharp request."""
+
+  def setUp(self):
+    self.CP = _explorer_cp()
+    self.ext = _Harness(self.CP)
+    self.ext.human_turn_detector = _ForcedDetector(False)
+    self.ext.path_angle_blend_ratio = 0.0
+
+  def _update(self, v_ego, measured_curvature, desired_curvature, *, pressed=False, lat_active=True):
+    cs = _CS(vEgoRaw=v_ego, vEgo=v_ego, yawRate=-measured_curvature * v_ego, steeringPressed=pressed)
+    return self.ext.update_angle_strategy(
+      _CC(latActive=lat_active), cs, _Actuators(curvature=desired_curvature), self.CP)
+
+  def _settle(self, v_ego, measured_curvature, desired_curvature, frames=20):
+    result = None
+    for _ in range(frames):
+      result = self._update(v_ego, measured_curvature, desired_curvature)
+    return result
+
+  def test_deceleration_cannot_unwind_undertracked_sharp_curve(self):
+    first = self._settle(4.7, 0.047, 0.070)
+    raw_second = 0.064 * 4.1 * 1.30
+    second = self._update(4.1, 0.040, 0.064)
+
+    self.assertLess(raw_second, abs(first.path_angle))
+    self.assertTrue(self.ext.bp_low_speed_curve_hold_active)
+    self.assertAlmostEqual(second.path_angle, first.path_angle)
+
+  def test_hold_is_symmetric(self):
+    first = self._settle(4.7, -0.047, -0.070)
+    second = self._update(4.1, -0.040, -0.064)
+
+    self.assertTrue(self.ext.bp_low_speed_curve_hold_active)
+    self.assertAlmostEqual(second.path_angle, first.path_angle)
+
+  def test_hold_addition_is_bounded(self):
+    self.ext.path_angle_last = 0.40
+    # The existing soft ROC needs a few frames to move down from 0.40; once it catches the
+    # bounded hold target, the hold itself must settle exactly 0.10 rad above the raw result.
+    result = None
+    for _ in range(4):
+      result = self._update(3.0, 0.025, 0.040)
+
+    raw = 0.040 * 3.0 * 1.30
+    self.assertTrue(self.ext.bp_low_speed_curve_hold_active)
+    self.assertAlmostEqual(result.path_angle, raw + 0.10)
+
+  def test_model_exit_releases_hold(self):
+    first = self._settle(4.7, 0.047, 0.070)
+    held = self._update(4.1, 0.040, 0.064)
+    exiting = self._update(4.1, 0.040, 0.030)
+
+    self.assertAlmostEqual(held.path_angle, first.path_angle)
+    self.assertFalse(self.ext.bp_low_speed_curve_hold_active)
+    self.assertLess(abs(exiting.path_angle), abs(held.path_angle))
+
+  def test_gentle_curve_is_unchanged(self):
+    first = self._settle(4.7, 0.006, 0.012)
+    second = self._update(4.1, 0.005, 0.010)
+
+    self.assertFalse(self.ext.bp_low_speed_curve_hold_active)
+    self.assertLess(abs(second.path_angle), abs(first.path_angle))
+
+  def test_driver_press_releases_hold(self):
+    first = self._settle(4.7, 0.047, 0.070)
+    second = self._update(4.1, 0.040, 0.064, pressed=True)
+
+    self.assertFalse(self.ext.bp_low_speed_curve_hold_active)
+    self.assertLess(abs(second.path_angle), abs(first.path_angle))
+
+  def test_lane_change_does_not_hold(self):
+    self.ext.model = SimpleNamespace(
+      orientationRate=SimpleNamespace(z=[0.0] * 33),
+      meta=SimpleNamespace(laneChangeState=2, laneChangeDirection=0),
+    )
+    first = self._settle(4.7, 0.047, 0.070)
+    second = self._update(4.1, 0.040, 0.064)
+
+    self.assertFalse(self.ext.bp_low_speed_curve_hold_active)
+    self.assertLess(abs(second.path_angle), abs(first.path_angle))
+
+  def test_inactive_resets_hold_telemetry(self):
+    self._settle(4.7, 0.047, 0.070)
+    self._update(4.1, 0.040, 0.064)
+    self.assertTrue(self.ext.bp_low_speed_curve_hold_active)
+
+    result = self._update(4.1, 0.040, 0.064, lat_active=False)
+
+    self.assertEqual(result.path_angle, 0.0)
+    self.assertFalse(self.ext.bp_low_speed_curve_hold_active)
+
+
 class TestMeasurementSelection(unittest.TestCase):
   """get_current_curvature must select by the CP_SP STEER_ANGLE_CURVATURE flag: yaw rate
   by default (stock ford.h angle_meas family), pinion angle via the vehicle model when

@@ -553,6 +553,7 @@ struct ControllerStateBP @0xcd96dafb67a082d0 {
   # Only published by Ford BP, so other cars show nothing.
   activeLateralMode @54 :LateralMode;
   reversalUnwindActive @55 :Bool;  # angle mode: post-lane-change old-sign path angle is unwinding to neutral
+  lowSpeedCurveHoldActive @56 :Bool;  # angle mode: low-speed deceleration is prevented from prematurely unwinding a sharp curve
 
   enum LateralMode {
     openpilot @0;  # BP lateral bypassed (disable_BP_lat_UI)

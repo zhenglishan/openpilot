@@ -192,6 +192,26 @@ class TestShadowCurvaturePublishing(unittest.TestCase):
     self.assertTrue(detector.enabled)
     self.assertTrue(self.ext.angle_human_turn_active)
 
+  def test_human_turn_toggle_disables_proactive_release_blip(self):
+    self.ext.enable_human_turn_detection_curv = False
+    self.ext.press_timer_s = 1.0
+    result = self._update()
+
+    self.assertEqual(self.ext.press_timer_s, 0.0)
+    self.assertEqual(self.ext.stall_blip_frames_left, 0)
+    self.assertFalse(self.ext.angle_stall_blip_active)
+    self.assertNotEqual(result.path_angle, 0.0)
+
+  def test_human_turn_toggle_enables_proactive_release_blip(self):
+    self.ext.enable_human_turn_detection_curv = True
+    self.ext.press_timer_s = 1.0
+    result = self._update()
+
+    self.assertEqual(self.ext.press_timer_s, 0.0)
+    self.assertEqual(self.ext.stall_blip_frames_left, 5)
+    self.assertTrue(self.ext.angle_stall_blip_active)
+    self.assertEqual(result.path_angle, 0.0)
+
   def test_stall_blip_publishes_measured(self):
     self.ext.stall_blip_frames_left = 3
     result = self._update()

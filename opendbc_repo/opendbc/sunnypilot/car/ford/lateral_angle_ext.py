@@ -105,7 +105,8 @@ _STALL_HOLD_S = 0.5          # accumulated clip-binding time before a pulse fire
 _STALL_BLIP_FRAMES = 6       # mode-0 pulse length (6 frames @ 20 Hz = 300 ms; PSCM acked mode 0 in ~150 ms on-road)
 _STALL_COOLDOWN_S = 2.0      # re-arm delay after a pulse (release ramp + PSCM response time)
 _STALL_MAX_BLIPS = 3         # give up on a stuck episode; devLim telemetry keeps recording the stall
-# Proactive hand-off blip: any sustained driver press attenuates the PSCM (route 000000be seg 4:
+# Proactive hand-off blip (gated by the Human Turn Detection setting): any sustained driver press
+# attenuates the PSCM (route 000000be seg 4:
 # 3 s of sub-45-deg circle-exit steering left it at ~0x delivery, and the reactive detector's
 # fire-after-the-stall-develops timing meant 2.4 s of dead-straight running into the next curve
 # before the pulse landed). Firing the same pulse on the falling edge of a sustained press resets
@@ -304,11 +305,15 @@ class LateralAngleExt:
         lateralUncertainty=0.0,
       )
 
-    # Proactive hand-off blip: the falling edge of a sustained press earns an immediate mode-0
-    # pulse (see _PRESS_BLIP_MIN_S) -- resets the PSCM's press-induced attenuation right at
-    # hand-off, while the car is straight and the command small, instead of waiting for the
-    # reactive stall detector below to watch the car miss the next curve first.
-    if CS.out.steeringPressed:
+    # Proactive hand-off blip: share the Human Turn Detection setting. When the setting is off,
+    # clear the timer so a press accumulated while disabled cannot fire after it is re-enabled.
+    # When enabled, the falling edge of a sustained press earns an immediate mode-0 pulse (see
+    # _PRESS_BLIP_MIN_S) -- resets the PSCM's press-induced attenuation right at hand-off, while
+    # the car is straight and the command small, instead of waiting for the reactive stall detector
+    # below to watch the car miss the next curve first. The reactive detector remains independent.
+    if not self.enable_human_turn_detection_curv:
+      self.press_timer_s = 0.0
+    elif CS.out.steeringPressed:
       self.press_timer_s += _STEER_DT
     else:
       if (self.press_timer_s >= _PRESS_BLIP_MIN_S and self.stall_blip_cooldown_s <= 0.0

@@ -184,6 +184,7 @@ class CarController(CarControllerBase, LateralCurvExt, LateralAngleExt, Longitud
         self.curvatureDeviationLimited = getattr(self, 'bp_curvature_deviation_limited', False)
         self.humanTurnLateralPaused = self.angle_human_turn_active if _angle_mode else False
         self.stallBlipActive = self.angle_stall_blip_active if _angle_mode else False
+        self.reversalUnwindActive = self.angle_reversal_unwind_active if _angle_mode else False
 
         # BluePilot: angle-mode human-turn override -- send lateral inactive (mode 0) while the
         # driver manually turns, so the PSCM releases cleanly instead of stalling 2-3 s on

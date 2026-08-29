@@ -131,6 +131,7 @@ def publish_controller_state_bp(CI, pm):
     cs_bp.curvatureDeviationLimited = getattr(CI.CC, "curvatureDeviationLimited", False)
     cs_bp.humanTurnLateralPaused = bool(getattr(CI.CC, "humanTurnLateralPaused", False))
     cs_bp.stallBlipActive = bool(getattr(CI.CC, "stallBlipActive", False))
+    cs_bp.reversalUnwindActive = bool(getattr(CI.CC, "reversalUnwindActive", False))
     # BluePilot: mode the controller actually ran, straight off the car controller (not Params).
     if getattr(CI.CC, "disable_BP_lat_UI", True):
       cs_bp.activeLateralMode = structs.ControllerStateBP.LateralMode.openpilot

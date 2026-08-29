@@ -116,6 +116,16 @@ _PRESS_BLIP_MIN_S = 0.5      # press must last this long before its release earn
 # The pulse releases steering for 300 ms; never fire it in a curve.
 _BLIP_MAX_PATH_ANGLE = 0.10  # rad
 
+# Lane-change reversal unwind. Above 9 m/s the measured-curvature deviation clip can keep
+# kappa_cmd on the OLD side of zero after the planner has already requested the opposite sign.
+# That is safe from a deviation standpoint, but it can make the car continue the lane-change arc
+# for 0.4-0.8 s instead of returning to centre. Remember a just-finished lane change because the
+# planner's counter-steer can arrive after meta.laneChangeState has already returned to off.
+_REVERSAL_LC_MEMORY_S = 3.0
+_REVERSAL_CONFIRM_S = 0.10
+_REVERSAL_DESIRED_MIN = 0.0003
+_REVERSAL_EXIT_CURVATURE = 0.75 * CarControllerParams.CURVATURE_ERROR
+
 
 def pscm_d_ref_m(v_ego_ms: float) -> float:
   v = max(float(v_ego_ms), 0.0)
@@ -175,6 +185,12 @@ class LateralAngleExt:
     self.stall_blip_count = 0         # pulses fired this stall episode
     self.angle_stall_blip_active = False
     self.press_timer_s = 0.0          # continuous steeringPressed time, for the hand-off blip
+    # Lane-change reversal unwind state. This never disables lateral control: it only makes the
+    # path-angle target move monotonically to neutral until measured curvature can safely cross
+    # zero under the normal deviation envelope.
+    self.reversal_recent_lane_change_s = 0.0
+    self.reversal_confirm_s = 0.0
+    self.angle_reversal_unwind_active = False
 
   def update_angle_params(self, params):
     """Sets per-platform gain defaults and reads user angle-tuning params."""
@@ -252,6 +268,9 @@ class LateralAngleExt:
       self.stall_blip_count = 0
       self.angle_stall_blip_active = False
       self.press_timer_s = 0.0
+      self.reversal_recent_lane_change_s = 0.0
+      self.reversal_confirm_s = 0.0
+      self.angle_reversal_unwind_active = False
       self.precision_type = 1
       return LateralResult(
         apply_curvature=0.0,
@@ -294,6 +313,9 @@ class LateralAngleExt:
       self.stall_blip_count = 0
       self.angle_stall_blip_active = False
       self.press_timer_s = 0.0
+      self.reversal_recent_lane_change_s = 0.0
+      self.reversal_confirm_s = 0.0
+      self.angle_reversal_unwind_active = False
       self.precision_type = 1
       return LateralResult(
         apply_curvature=0.0,
@@ -340,6 +362,9 @@ class LateralAngleExt:
       # Truthful shadow during the blip (see the inactive-path comment).
       self.bp_kappa_cmd = self.get_current_curvature(CS)
       self._desired_curvature_last = float(actuators.curvature)
+      self.reversal_recent_lane_change_s = 0.0
+      self.reversal_confirm_s = 0.0
+      self.angle_reversal_unwind_active = False
       self.precision_type = 1
       if self.stall_blip_frames_left <= 0:
         self.stall_blip_cooldown_s = _STALL_COOLDOWN_S
@@ -420,9 +445,19 @@ class LateralAngleExt:
     self._desired_curvature_last = desired_curvature
 
     if self.model is not None:
-      self.lane_change = self.model.meta.laneChangeState in (1, 2, 3)
+      _lane_change_state = self.model.meta.laneChangeState
+      self.lane_change = _lane_change_state in (1, 2, 3)
     else:
+      _lane_change_state = 0
       self.lane_change = False
+
+    # PreLaneChange only means the blinker/gap-check phase; do not arm the unwind until the model
+    # has actually started moving laterally. This avoids altering an ordinary road-curve reversal
+    # merely because the driver has requested a lane change that has not begun yet.
+    if _lane_change_state in (2, 3):
+      self.reversal_recent_lane_change_s = _REVERSAL_LC_MEMORY_S
+    else:
+      self.reversal_recent_lane_change_s = max(0.0, self.reversal_recent_lane_change_s - _STEER_DT)
 
     lane_change_factor = interp(
       v_ego, self.lane_change_factor_bp, [self.lane_change_factor_low, self.lane_change_factor_high_ang]
@@ -458,6 +493,39 @@ class LateralAngleExt:
       # not rate-of-change -- see carcontroller.py)?
       self.bp_curvature_deviation_limited = bool(abs(kappa_cmd - _kappa_cmd_pre_error_clip) > 1e-9)
 
+    # BluePilot: lane-change reversal escape. If the planner has crossed zero but the measured-
+    # curvature envelope still forces kappa_cmd to the old sign, continuing to derive path_angle
+    # from kappa_cmd actively prolongs the old turn. Confirm for two 20 Hz frames, then request a
+    # neutral path angle through the ordinary soft ROC below. Lateral remains enabled (no mode-0
+    # pulse and no PSCM authority reset), while bp_kappa_cmd publishes measured curvature so
+    # ford.h's shadow-deviation check remains truthful during this deliberately neutral command.
+    # Once measured curvature is near zero (or agrees with the planner again), normal mapping
+    # resumes and the opposite command ramps in through the same ROC.
+    _reversal_candidate = (
+      v_ego > 9.0
+      and self.reversal_recent_lane_change_s > 0.0
+      and abs(requested_curvature) > _REVERSAL_DESIRED_MIN
+      and abs(current_curvature) > _REVERSAL_EXIT_CURVATURE
+      and requested_curvature * current_curvature < 0.0
+      and kappa_cmd * current_curvature > 0.0
+    )
+    if self.angle_reversal_unwind_active:
+      _reversal_done = (
+        self.reversal_recent_lane_change_s <= 0.0
+        or abs(requested_curvature) <= _REVERSAL_DESIRED_MIN
+        or abs(current_curvature) <= _REVERSAL_EXIT_CURVATURE
+        or requested_curvature * current_curvature >= 0.0
+      )
+      if _reversal_done:
+        self.angle_reversal_unwind_active = False
+        self.reversal_confirm_s = 0.0
+    elif _reversal_candidate:
+      self.reversal_confirm_s += _STEER_DT
+      if self.reversal_confirm_s >= _REVERSAL_CONFIRM_S:
+        self.angle_reversal_unwind_active = True
+    else:
+      self.reversal_confirm_s = 0.0
+
     lateral_uncertainty = 0.0  # no curvature-limit ladder until angle-mode torque display is defined
 
 
@@ -471,7 +539,7 @@ class LateralAngleExt:
     # As the curve gets bigger, we will need a little boost to the signal to to not understeer
     self.curvature_factor = interp(abs(kappa_cmd), [0.0007, 0.001], [self.low_gain_calc, self.high_gain_calc])
 
-    path_angle_calc = kappa_cmd * v_ego * self.curvature_factor
+    path_angle_calc = 0.0 if self.angle_reversal_unwind_active else kappa_cmd * v_ego * self.curvature_factor
     path_angle = path_angle_calc
 
 
@@ -534,7 +602,8 @@ class LateralAngleExt:
     # in-drive lateral safety block observed across ~3h of replayed road-test routes was exactly
     # this (driver fighting a sustained curve with the mode still enabled). The honest command
     # during a press is the driver's actual curvature.
-    self.bp_kappa_cmd = self.get_current_curvature(CS) if CS.out.steeringPressed else kappa_cmd
+    self.bp_kappa_cmd = (self.get_current_curvature(CS)
+                         if CS.out.steeringPressed or self.angle_reversal_unwind_active else kappa_cmd)
 
     # BluePilot: would the equivalent curvature (kappa_cmd) have been rate-limited by curvature-mode's
     # ROC (apply_std_steer_angle_limits)? kappa_cmd is already error-clipped above (same clip
@@ -551,7 +620,7 @@ class LateralAngleExt:
     # accumulator rather than resetting it; a closed gap or driver press ends the episode.
     self.stall_blip_cooldown_s = max(0.0, self.stall_blip_cooldown_s - _STEER_DT)
     _stall_gap = desired_curvature - current_curvature
-    _stalled = (not CS.out.steeringPressed and not self.lane_change and v_ego > 9.0
+    _stalled = (not CS.out.steeringPressed and not self.lane_change and not self.angle_reversal_unwind_active and v_ego > 9.0
                 and abs(_stall_gap) > _STALL_GAP_MIN
                 and abs(desired_curvature) > abs(current_curvature))
     if _stalled:

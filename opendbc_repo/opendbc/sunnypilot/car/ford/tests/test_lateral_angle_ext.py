@@ -236,6 +236,114 @@ class TestShadowCurvaturePublishing(unittest.TestCase):
     self.assertTrue(self.ext.bp_curvature_deviation_limited)
 
 
+class TestLaneChangeReversalUnwind(unittest.TestCase):
+  V_EGO = 15.0
+
+  def setUp(self):
+    self.CP = _explorer_cp()
+    self.ext = _Harness(self.CP)
+    self.ext.human_turn_detector = _ForcedDetector(False)
+    self.ext.path_angle_blend_ratio = 0.0  # isolate planner curvature in these state-machine tests
+    self.model = SimpleNamespace(
+      orientationRate=SimpleNamespace(z=[0.0] * 33),
+      meta=SimpleNamespace(laneChangeState=2, laneChangeDirection=0),
+    )
+    self.ext.model = self.model
+
+  def _update(self, measured_curvature, desired_curvature, v_ego=None, lat_active=True):
+    v = self.V_EGO if v_ego is None else v_ego
+    cs = _CS(vEgoRaw=v, vEgo=v, yawRate=-measured_curvature * v)
+    return self.ext.update_angle_strategy(
+      _CC(latActive=lat_active), cs, _Actuators(curvature=desired_curvature), self.CP)
+
+  def test_positive_to_negative_reversal_unwinds_to_neutral(self):
+    self.ext.path_angle_last = 0.09
+
+    first = self._update(0.007, -0.002)
+    second = self._update(0.007, -0.002)
+
+    self.assertNotEqual(first.path_angle, 0.0)
+    self.assertTrue(self.ext.angle_reversal_unwind_active)
+    self.assertGreaterEqual(second.path_angle, 0.0)
+    self.assertLess(abs(second.path_angle), abs(first.path_angle))
+    self.assertAlmostEqual(self.ext.bp_kappa_cmd, 0.007)
+
+  def test_negative_to_positive_reversal_is_symmetric(self):
+    self.ext.path_angle_last = -0.09
+
+    first = self._update(-0.007, 0.002)
+    second = self._update(-0.007, 0.002)
+
+    self.assertTrue(self.ext.angle_reversal_unwind_active)
+    self.assertLessEqual(second.path_angle, 0.0)
+    self.assertLess(abs(second.path_angle), abs(first.path_angle))
+    self.assertAlmostEqual(self.ext.bp_kappa_cmd, -0.007)
+
+  def test_recent_lane_change_memory_covers_delayed_countersteer(self):
+    self._update(0.007, 0.002)
+    self.model.meta.laneChangeState = 0
+    self.ext.path_angle_last = 0.09
+
+    self._update(0.007, -0.002)
+    self._update(0.007, -0.002)
+
+    self.assertGreater(self.ext.reversal_recent_lane_change_s, 0.0)
+    self.assertTrue(self.ext.angle_reversal_unwind_active)
+
+  def test_low_speed_behavior_is_unchanged(self):
+    result = self._update(0.007, -0.002, v_ego=8.0)
+
+    self.assertFalse(self.ext.bp_curvature_deviation_limited)
+    self.assertFalse(self.ext.angle_reversal_unwind_active)
+    self.assertLess(result.path_angle, 0.0)
+
+  def test_no_reversal_unwind_outside_lane_change_window(self):
+    self.model.meta.laneChangeState = 0
+    self.ext.path_angle_last = 0.09
+
+    for _ in range(3):
+      result = self._update(0.007, -0.002)
+
+    self.assertFalse(self.ext.angle_reversal_unwind_active)
+    self.assertGreater(result.path_angle, 0.0)
+
+  def test_pre_lane_change_does_not_arm_unwind(self):
+    self.model.meta.laneChangeState = 1
+    self.ext.path_angle_last = 0.09
+
+    for _ in range(3):
+      result = self._update(0.007, -0.002)
+
+    self.assertEqual(self.ext.reversal_recent_lane_change_s, 0.0)
+    self.assertFalse(self.ext.angle_reversal_unwind_active)
+    self.assertGreater(result.path_angle, 0.0)
+
+  def test_unwind_exits_when_measured_curvature_reaches_zero_band(self):
+    self.ext.path_angle_last = 0.09
+    self._update(0.007, -0.002)
+    self._update(0.007, -0.002)
+    self.assertTrue(self.ext.angle_reversal_unwind_active)
+
+    first_exit = self._update(0.001, -0.002)
+    result = self._update(0.001, -0.002)
+
+    self.assertFalse(self.ext.angle_reversal_unwind_active)
+    self.assertLess(abs(first_exit.path_angle), 0.09)
+    self.assertLess(result.path_angle, 0.0)
+
+  def test_inactive_resets_reversal_state(self):
+    self.ext.reversal_recent_lane_change_s = 2.0
+    self.ext.reversal_confirm_s = 0.1
+    self.ext.angle_reversal_unwind_active = True
+
+    result = self._update(0.007, -0.002, lat_active=False)
+
+    self.assertEqual(result.path_angle, 0.0)
+    self.assertEqual(self.ext.reversal_recent_lane_change_s, 0.0)
+    self.assertEqual(self.ext.reversal_confirm_s, 0.0)
+    self.assertFalse(self.ext.angle_reversal_unwind_active)
+
+
 class TestMeasurementSelection(unittest.TestCase):
   """get_current_curvature must select by the CP_SP STEER_ANGLE_CURVATURE flag: yaw rate
   by default (stock ford.h angle_meas family), pinion angle via the vehicle model when
